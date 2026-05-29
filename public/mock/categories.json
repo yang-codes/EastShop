@@ -1,0 +1,5 @@
+﻿[
+  {"id":"industrial-flooring","name":{"zh":"工业地面","en":"Industrial flooring","ru":"Промышленные полы"},"sortOrder":1,"isActive":true},
+  {"id":"safety-equipment","name":{"zh":"安全装备","en":"Safety equipment","ru":"Средства защиты"},"sortOrder":2,"isActive":true},
+  {"id":"warehouse-tools","name":{"zh":"仓储工具","en":"Warehouse tools","ru":"Складские инструменты"},"sortOrder":3,"isActive":true}
+]

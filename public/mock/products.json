@@ -1,0 +1,86 @@
+﻿[
+  {
+    "id": "esd-floor-tile-600",
+    "name": {"zh": "PVC 防静电地板 600x600", "en": "PVC ESD Floor Tile 600x600", "ru": "ПВХ антистатическая плитка 600x600"},
+    "description": {"zh": "适合电子厂、机房和洁净车间的耐磨防静电地面材料。", "en": "Durable anti-static flooring for electronics plants, server rooms, and clean workshops.", "ru": "Износостойкое антистатическое покрытие для электроники, серверных и чистых помещений."},
+    "detail": {"zh": "高密度 PVC 材质，表面易清洁，支持批量铺装。建议配合导电胶和接地系统使用。", "en": "High-density PVC with an easy-clean surface. Recommended with conductive adhesive and grounding.", "ru": "Плотный ПВХ с поверхностью, простой в уборке. Рекомендуется монтаж с токопроводящим клеем и заземлением."},
+    "categoryId": "industrial-flooring", "price": 12.8, "coverImage": "/mock/images/esd-floor-tile.svg", "images": ["/mock/images/esd-floor-tile.svg"],
+    "specs": [
+      {"id":"size","label":{"zh":"尺寸","en":"Size","ru":"Размер"},"value":{"zh":"600 x 600 mm","en":"600 x 600 mm","ru":"600 x 600 мм"}},
+      {"id":"thickness","label":{"zh":"厚度","en":"Thickness","ru":"Толщина"},"value":{"zh":"2.0 mm","en":"2.0 mm","ru":"2.0 мм"}},
+      {"id":"surfaceResistance","label":{"zh":"表面电阻","en":"Surface resistance","ru":"Поверхностное сопротивление"},"value":{"zh":"10^6 - 10^9 Ω","en":"10^6 - 10^9 ohm","ru":"10^6 - 10^9 Ом"}},
+      {"id":"color","label":{"zh":"颜色","en":"Color","ru":"Цвет"},"value":{"zh":"浅灰色","en":"Light gray","ru":"Светло-серый"}}
+    ],
+    "tags": ["ESD", "PVC", "flooring"], "sortOrder": 1, "isFeatured": true, "isActive": true
+  },
+  {
+    "id": "epoxy-floor-kit",
+    "name": {"zh": "环氧防静电地坪套装", "en": "ESD Epoxy Floor Coating Kit", "ru": "Комплект антистатического эпоксидного пола"},
+    "description": {"zh": "双组份环氧涂层，适合仓库、实验室和电子生产区域。", "en": "Two-component epoxy coating for warehouses, labs, and electronics production areas.", "ru": "Двухкомпонентное эпоксидное покрытие для складов, лабораторий и электронного производства."},
+    "detail": {"zh": "包含底涂和面涂，施工后形成连续防尘表面。支持按项目面积报价。", "en": "Includes primer and topcoat for a continuous dust-resistant surface. Project pricing available.", "ru": "Включает грунт и финишный слой для сплошной пылезащитной поверхности. Возможен расчет по площади."},
+    "categoryId": "industrial-flooring", "price": 58, "coverImage": "/mock/images/epoxy-floor-kit.svg", "images": ["/mock/images/epoxy-floor-kit.svg"],
+    "specs": [
+      {"id":"coverage","label":{"zh":"覆盖面积","en":"Coverage","ru":"Покрытие"},"value":{"zh":"20-25 平方米/套","en":"20-25 m2/set","ru":"20-25 м2/комплект"}},
+      {"id":"finish","label":{"zh":"表面效果","en":"Finish","ru":"Финиш"},"value":{"zh":"半光","en":"Semi-gloss","ru":"Полуглянцевый"}},
+      {"id":"components","label":{"zh":"组成","en":"Components","ru":"Компоненты"},"value":{"zh":"底涂 + 面涂","en":"Primer + topcoat","ru":"Грунт + финишный слой"}},
+      {"id":"leadTime","label":{"zh":"交期","en":"Lead time","ru":"Срок поставки"},"value":{"zh":"7-10 天","en":"7-10 days","ru":"7-10 дней"}}
+    ],
+    "tags": ["epoxy", "ESD", "coating"], "sortOrder": 2, "isFeatured": true, "isActive": true
+  },
+  {
+    "id": "insulated-gloves-12kv",
+    "name": {"zh": "12kV 绝缘防护手套", "en": "12kV Insulated Safety Gloves", "ru": "Изолирующие перчатки 12 кВ"},
+    "description": {"zh": "用于电气维护和设备检修的基础防护用品。", "en": "Essential protection for electrical maintenance and equipment inspection.", "ru": "Базовая защита для обслуживания электрооборудования и проверки установок."},
+    "detail": {"zh": "柔韧橡胶材质，掌部纹理提升握持稳定性。使用前需按安全规范检查。", "en": "Flexible rubber with textured palms for secure grip. Inspect according to safety rules before use.", "ru": "Гибкая резина с рельефной ладонью для надежного хвата. Перед применением требуется проверка."},
+    "categoryId": "safety-equipment", "price": 18.5, "coverImage": "/mock/images/insulated-gloves.svg", "images": ["/mock/images/insulated-gloves.svg"],
+    "specs": [
+      {"id":"voltage","label":{"zh":"耐压等级","en":"Voltage rating","ru":"Класс напряжения"},"value":{"zh":"12kV","en":"12kV","ru":"12 кВ"}},
+      {"id":"material","label":{"zh":"材质","en":"Material","ru":"Материал"},"value":{"zh":"天然橡胶","en":"Natural rubber","ru":"Натуральная резина"}},
+      {"id":"sizes","label":{"zh":"尺码","en":"Sizes","ru":"Размеры"},"value":{"zh":"M / L / XL","en":"M / L / XL","ru":"M / L / XL"}},
+      {"id":"standard","label":{"zh":"适用标准","en":"Standard","ru":"Стандарт"},"value":{"zh":"电气安全","en":"Electrical safety","ru":"Электробезопасность"}}
+    ],
+    "tags": ["safety", "electrical", "gloves"], "sortOrder": 3, "isFeatured": false, "isActive": true
+  },
+  {
+    "id": "led-work-light-50w",
+    "name": {"zh": "50W 便携式 LED 工作灯", "en": "50W Portable LED Work Light", "ru": "Портативный LED прожектор 50 Вт"},
+    "description": {"zh": "高亮度工作照明，适合仓库、工地和夜间维修。", "en": "Bright task lighting for warehouses, job sites, and night maintenance.", "ru": "Яркое рабочее освещение для складов, объектов и ночного ремонта."},
+    "detail": {"zh": "铝合金外壳，支架角度可调，支持多场景临时照明。", "en": "Aluminum body with adjustable stand for temporary lighting in multiple scenarios.", "ru": "Алюминиевый корпус и регулируемая стойка для временного освещения разных зон."},
+    "categoryId": "warehouse-tools", "price": 24, "coverImage": "/mock/images/led-work-light.svg", "images": ["/mock/images/led-work-light.svg"],
+    "specs": [
+      {"id":"power","label":{"zh":"功率","en":"Power","ru":"Мощность"},"value":{"zh":"50W","en":"50W","ru":"50 Вт"}},
+      {"id":"brightness","label":{"zh":"亮度","en":"Brightness","ru":"Яркость"},"value":{"zh":"4500 lm","en":"4500 lm","ru":"4500 лм"}},
+      {"id":"body","label":{"zh":"外壳","en":"Body","ru":"Корпус"},"value":{"zh":"铝合金","en":"Aluminum","ru":"Алюминий"}},
+      {"id":"ipRating","label":{"zh":"防护等级","en":"IP rating","ru":"Степень защиты"},"value":{"zh":"IP65","en":"IP65","ru":"IP65"}}
+    ],
+    "tags": ["LED", "warehouse", "lighting"], "sortOrder": 4, "isFeatured": false, "isActive": true
+  },
+  {
+    "id": "stackable-storage-bin",
+    "name": {"zh": "可堆叠零件周转箱", "en": "Stackable Parts Storage Bin", "ru": "Штабелируемый контейнер для деталей"},
+    "description": {"zh": "适合仓库、车间和维修台的小件分类收纳。", "en": "Small-parts organization for warehouses, workshops, and service benches.", "ru": "Организация мелких деталей для складов, мастерских и рабочих мест."},
+    "detail": {"zh": "前开口设计，拿取方便，可叠放节省空间。支持多色分类。", "en": "Open-front design for easy picking. Stackable body saves space and supports color coding.", "ru": "Открытая передняя часть для удобного доступа. Штабелирование экономит место, доступны разные цвета."},
+    "categoryId": "warehouse-tools", "price": 3.2, "coverImage": "/mock/images/storage-bin.svg", "images": ["/mock/images/storage-bin.svg"],
+    "specs": [
+      {"id":"size","label":{"zh":"尺寸","en":"Size","ru":"Размер"},"value":{"zh":"300 x 200 x 150 mm","en":"300 x 200 x 150 mm","ru":"300 x 200 x 150 мм"}},
+      {"id":"material","label":{"zh":"材质","en":"Material","ru":"Материал"},"value":{"zh":"PP 塑料","en":"PP plastic","ru":"ПП пластик"}},
+      {"id":"colors","label":{"zh":"颜色","en":"Colors","ru":"Цвета"},"value":{"zh":"蓝 / 红 / 黄","en":"Blue / Red / Yellow","ru":"Синий / Красный / Желтый"}},
+      {"id":"package","label":{"zh":"包装","en":"Package","ru":"Упаковка"},"value":{"zh":"24 个/箱","en":"24 pcs/carton","ru":"24 шт/коробка"}}
+    ],
+    "tags": ["storage", "warehouse", "plastic"], "sortOrder": 5, "isFeatured": true, "isActive": true
+  },
+  {
+    "id": "laser-distance-meter",
+    "name": {"zh": "手持激光测距仪 60m", "en": "Handheld Laser Distance Meter 60m", "ru": "Лазерный дальномер 60 м"},
+    "description": {"zh": "用于安装、仓储测量和施工现场快速测距。", "en": "Fast measuring tool for installation, warehouse checks, and construction sites.", "ru": "Быстрый измерительный инструмент для монтажа, склада и строительных объектов."},
+    "detail": {"zh": "支持面积/体积计算，背光显示，便于单人快速记录尺寸。", "en": "Supports area and volume calculation with backlit display for fast single-person measurement.", "ru": "Поддерживает расчет площади и объема, дисплей с подсветкой для быстрых измерений."},
+    "categoryId": "warehouse-tools", "price": 31, "coverImage": "/mock/images/laser-meter.svg", "images": ["/mock/images/laser-meter.svg"],
+    "specs": [
+      {"id":"range","label":{"zh":"测量范围","en":"Range","ru":"Диапазон"},"value":{"zh":"0.05-60 m","en":"0.05-60 m","ru":"0.05-60 м"}},
+      {"id":"accuracy","label":{"zh":"精度","en":"Accuracy","ru":"Точность"},"value":{"zh":"+/- 2 mm","en":"+/- 2 mm","ru":"+/- 2 мм"}},
+      {"id":"display","label":{"zh":"显示屏","en":"Display","ru":"Дисплей"},"value":{"zh":"背光 LCD","en":"Backlit LCD","ru":"LCD с подсветкой"}},
+      {"id":"battery","label":{"zh":"电池","en":"Battery","ru":"Батарея"},"value":{"zh":"AAA x2","en":"AAA x2","ru":"AAA x2"}}
+    ],
+    "tags": ["measurement", "tool", "laser"], "sortOrder": 6, "isFeatured": false, "isActive": true
+  }
+]
