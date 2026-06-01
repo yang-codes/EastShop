@@ -6,6 +6,7 @@ import { CheckoutPage } from '../pages/store/CheckoutPage'
 import { ProductDetailPage } from '../pages/store/ProductDetailPage'
 import { StoreHomePage } from '../pages/store/StoreHomePage'
 import { AdminCategoriesPage } from '../pages/admin/AdminCategoriesPage'
+import { AdminApiDocsPage } from '../pages/admin/AdminApiDocsPage'
 import { AdminLoginPage } from '../pages/admin/AdminLoginPage'
 import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage'
 import { AdminProductsPage } from '../pages/admin/AdminProductsPage'
@@ -26,6 +27,7 @@ export function AppRouter() {
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="api-docs" element={<AdminApiDocsPage />} />
         </Route>
       </Routes>
     </HashRouter>

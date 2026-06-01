@@ -24,13 +24,17 @@ export function ProductDetailPage() {
   const { productId } = useParams()
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
+  const [selectedImage, setSelectedImage] = useState('')
 
   useEffect(() => {
     if (!productId) {
       return
     }
 
-    void catalogService.getProductById(productId).then(setProduct)
+    void catalogService.getProductById(productId).then((loadedProduct) => {
+      setProduct(loadedProduct)
+      setSelectedImage(loadedProduct?.coverImage || loadedProduct?.images[0] || '')
+    })
   }, [productId])
 
   const language = resolveLanguage(i18n.language)
@@ -55,12 +59,31 @@ export function ProductDetailPage() {
     navigate('/cart')
   }
 
+  const imageGallery = Array.from(new Set([product.coverImage, ...product.images].filter((image): image is string => Boolean(image))))
+
   return (
     <section className="page-stack">
       <PageHeader description={product.description[language]} title={product.name[language]} />
       <div className="detail-panel">
-        <div className="media-placeholder product-detail-image">
-          {product.coverImage ? <img alt={product.name[language]} src={product.coverImage} /> : null}
+        <div className="product-media-stack">
+          <div className="media-placeholder product-detail-image">
+            {selectedImage ? <img alt={product.name[language]} src={selectedImage} /> : null}
+          </div>
+          {imageGallery.length > 1 ? (
+            <div className="thumbnail-row" aria-label={t('store.productImages')}>
+              {imageGallery.map((image) => (
+                <button
+                  aria-label={t('store.selectImage')}
+                  className={image === selectedImage ? 'selected' : ''}
+                  key={image}
+                  onClick={() => setSelectedImage(image)}
+                  type="button"
+                >
+                  <img alt="" src={image} />
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="form-card">
           <strong className="price-line">${product.price.toFixed(2)}</strong>

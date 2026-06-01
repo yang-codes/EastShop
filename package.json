@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@scalar/api-reference-react": "^0.9.41",
     "@supabase/supabase-js": "^2.106.2",
     "browser-image-compression": "^2.0.2",
     "exceljs": "^4.4.0",
