@@ -1,4 +1,4 @@
-import { BookOpen, Box, ClipboardList, FolderTree, LogOut } from 'lucide-react'
+import { Bell, BookOpen, Box, ClipboardList, FolderTree, LogOut, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -20,7 +20,14 @@ export function AdminLayout() {
 
     async function loadAdmin() {
       if (!isSupabaseConfigured()) {
-        setAuthState('unauthorized')
+        setAdmin({
+          displayName: 'Mock Admin',
+          email: 'mock-admin@eastshop.local',
+          isActive: true,
+          role: 'admin',
+          userId: 'mock-admin',
+        })
+        setAuthState('authorized')
         return
       }
 
@@ -92,6 +99,14 @@ export function AdminLayout() {
           <NavLink to="/admin/categories">
             <FolderTree size={18} />
             {t('admin.categories')}
+          </NavLink>
+          <NavLink to="/admin/store-settings">
+            <Settings size={18} />
+            {t('admin.storeSettings')}
+          </NavLink>
+          <NavLink to="/admin/notifications">
+            <Bell size={18} />
+            {t('admin.notifications')}
           </NavLink>
           <NavLink to="/admin/api-docs">
             <BookOpen size={18} />

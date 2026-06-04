@@ -1,5 +1,5 @@
 ﻿import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
-import type { Category, Product, ProductSpec } from '../types/product'
+import type { Category, Product, ProductSpec, ProductVariant } from '../types/product'
 
 type SupabaseCategoryRow = {
   id: string
@@ -22,10 +22,11 @@ type SupabaseProductRow = {
   detail_zh: string
   detail_en: string
   detail_ru: string
-  price: number | string
   cover_image: string | null
+  cover_images?: unknown
   images: unknown
   specs: unknown
+  variants?: unknown
   tags: unknown
   sort_order: number
   is_featured: boolean
@@ -46,6 +47,28 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+function resolveCoverImages(coverImages: unknown, coverImage?: string | null): string[] {
+  const images = asStringArray(coverImages)
+
+  if (images.length > 0) {
+    return images
+  }
+
+  return coverImage ? [coverImage] : []
+}
+
+function normalizeProduct(product: Product): Product {
+  const coverImages = product.coverImages?.length ? product.coverImages : product.coverImage ? [product.coverImage] : []
+  const variants = product.variants?.length ? product.variants : []
+
+  return {
+    ...product,
+    coverImage: product.coverImage ?? coverImages[0],
+    coverImages,
+    variants,
+  }
+}
+
 function asProductSpecs(value: unknown): ProductSpec[] {
   if (!Array.isArray(value)) {
     return []
@@ -59,6 +82,32 @@ function asProductSpecs(value: unknown): ProductSpec[] {
     const candidate = item as ProductSpec
     return Boolean(candidate.id && candidate.label && candidate.value)
   })
+}
+
+function asProductVariants(value: unknown): ProductVariant[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter((item): item is ProductVariant => {
+      if (!item || typeof item !== 'object') {
+        return false
+      }
+
+      const candidate = item as ProductVariant
+      return Boolean(candidate.id && candidate.name && Number.isFinite(Number(candidate.price)))
+    })
+    .map((variant, index) => ({
+      id: variant.id,
+      isActive: variant.isActive ?? true,
+      isDefault: variant.isDefault ?? index === 0,
+      name: variant.name,
+      price: Number(variant.price),
+      sku: variant.sku,
+      sortOrder: Number(variant.sortOrder) || index + 1,
+    }))
+    .sort((left, right) => left.sortOrder - right.sortOrder)
 }
 
 function mapCategory(row: SupabaseCategoryRow): Category {
@@ -75,9 +124,12 @@ function mapCategory(row: SupabaseCategoryRow): Category {
 }
 
 function mapProduct(row: SupabaseProductRow): Product {
+  const coverImages = resolveCoverImages(row.cover_images, row.cover_image)
+
   return {
     categoryId: row.category_id ?? '',
-    coverImage: row.cover_image ?? undefined,
+    coverImage: row.cover_image ?? coverImages[0],
+    coverImages,
     description: {
       en: row.description_en,
       ru: row.description_ru,
@@ -97,10 +149,10 @@ function mapProduct(row: SupabaseProductRow): Product {
       ru: row.name_ru,
       zh: row.name_zh,
     },
-    price: Number(row.price),
     sortOrder: row.sort_order,
     specs: asProductSpecs(row.specs),
     tags: asStringArray(row.tags),
+    variants: asProductVariants(row.variants),
   }
 }
 
@@ -160,7 +212,8 @@ export const catalogService = {
    */
   async listActiveProducts(): Promise<Product[]> {
     if (!isSupabaseConfigured()) {
-      return loadMockData<Product[]>('products.json')
+      const products = await loadMockData<Product[]>('products.json')
+      return products.map(normalizeProduct)
     }
 
     const { data, error } = await getSupabaseClient()

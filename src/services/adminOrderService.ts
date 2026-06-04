@@ -10,6 +10,10 @@ type OrderItemRow = {
   product_id: string
   /** 下单当时的商品名称快照，避免商品改名影响历史订单。 */
   product_name: string
+  /** 下单时选择的销售规格 ID。 */
+  variant_id?: string | null
+  /** 下单时选择的销售规格名称快照。 */
+  variant_name?: string | null
   /** 用户下单时使用的商品名称语言。 */
   language: SupportedLanguage
   /** 下单当时的商品单价快照。 */
@@ -25,7 +29,7 @@ type OrderRow = {
   id: string
   /** 客户姓名。 */
   customer_name: string
-  /** 客户联系电话。 */
+  /** 客户完整国际手机号。 */
   phone: string
   /** 客户社交账号，便于 Instagram/Telegram 人工联系。 */
   social_handle: string | null
@@ -171,6 +175,8 @@ function mapOrder(row: OrderRow): Order {
       quantity: item.quantity,
       subtotal: Number(item.subtotal),
       unitPrice: Number(item.price),
+      variantId: item.variant_id ?? undefined,
+      variantName: item.variant_name ?? undefined,
     })),
     location: {
       accuracy: row.location_accuracy ?? undefined,

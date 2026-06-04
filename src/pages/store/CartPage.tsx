@@ -1,4 +1,4 @@
-﻿import { Minus, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -39,24 +39,37 @@ export function CartPage() {
             return null
           }
 
+          const activeVariants = product.variants.filter((item) => item.isActive)
+          const variant = line.variantId
+            ? activeVariants.find((item) => item.id === line.variantId)
+            : activeVariants.find((item) => item.isDefault) ?? activeVariants[0]
+
+          if (!variant) {
+            return null
+          }
+
+          const unitPrice = variant.price
+
           return {
             line,
             product,
-            subtotal: product.price * line.quantity,
+            subtotal: unitPrice * line.quantity,
+            unitPrice,
+            variant: variant as Product['variants'][number],
           }
         })
-        .filter((item): item is { line: CartLine; product: Product; subtotal: number } => Boolean(item)),
+        .filter((item): item is { line: CartLine; product: Product; subtotal: number; unitPrice: number; variant: Product['variants'][number] } => Boolean(item)),
     [cart, products],
   )
 
   const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0)
 
-  function updateQuantity(productId: string, quantity: number) {
-    setCart(cartService.updateQuantity(productId, quantity))
+  function updateQuantity(productId: string, quantity: number, variantId?: string) {
+    setCart(cartService.updateQuantity(productId, quantity, variantId))
   }
 
-  function removeItem(productId: string) {
-    setCart(cartService.removeItem(productId))
+  function removeItem(productId: string, variantId?: string) {
+    setCart(cartService.removeItem(productId, variantId))
   }
 
   return (
@@ -65,31 +78,35 @@ export function CartPage() {
       {cartItems.length === 0 ? (
         <div className="form-card">
           <p>{t('cart.empty')}</p>
+          <Link className="primary-button cart-empty-action" to="/">
+            {t('cart.continueShopping')}
+          </Link>
         </div>
       ) : (
         <div className="cart-panel">
           <div className="cart-list">
-            {cartItems.map(({ line, product, subtotal }) => (
-              <article className="cart-item" key={product.id}>
-                <div className="cart-item-image">
+            {cartItems.map(({ line, product, subtotal, unitPrice, variant }) => (
+              <article className="cart-item" key={`${product.id}-${line.variantId ?? 'default'}`}>
+                <Link className="cart-item-image" to={`/product/${product.id}`}>
                   {product.coverImage ? <img alt={product.name[language]} src={product.coverImage} /> : null}
-                </div>
-                <div className="cart-item-main">
+                </Link>
+                <Link className="cart-item-main" to={`/product/${product.id}`}>
                   <h2>{product.name[language]}</h2>
+                  {variant ? <strong className="cart-item-variant">{variant.name[language]}</strong> : null}
                   <p>{product.description[language]}</p>
                   <div className="cart-item-meta">
                     <span>
-                      {t('cart.unitPrice')}: ${product.price.toFixed(2)}
+                      {t('cart.unitPrice')}: ${unitPrice.toFixed(2)}
                     </span>
                     <span>
                       {t('cart.subtotal')}: ${subtotal.toFixed(2)}
                     </span>
                   </div>
-                </div>
+                </Link>
                 <div className="quantity-control" aria-label={t('cart.quantity')}>
                   <button
                     aria-label={t('cart.decrease')}
-                    onClick={() => updateQuantity(product.id, line.quantity - 1)}
+                    onClick={() => updateQuantity(product.id, line.quantity - 1, line.variantId)}
                     type="button"
                   >
                     <Minus size={16} />
@@ -97,13 +114,13 @@ export function CartPage() {
                   <strong>{line.quantity}</strong>
                   <button
                     aria-label={t('cart.increase')}
-                    onClick={() => updateQuantity(product.id, line.quantity + 1)}
+                    onClick={() => updateQuantity(product.id, line.quantity + 1, line.variantId)}
                     type="button"
                   >
                     <Plus size={16} />
                   </button>
                 </div>
-                <button className="remove-button" onClick={() => removeItem(product.id)} type="button">
+                <button className="remove-button" onClick={() => removeItem(product.id, line.variantId)} type="button">
                   <Trash2 size={16} />
                   {t('cart.remove')}
                 </button>
@@ -115,6 +132,10 @@ export function CartPage() {
             <strong>${total.toFixed(2)}</strong>
             <Link className="primary-button" to="/checkout">
               {t('cart.checkout')}
+            </Link>
+            <Link className="secondary-button" to="/">
+              <ArrowLeft size={18} />
+              {t('cart.continueShopping')}
             </Link>
           </aside>
         </div>

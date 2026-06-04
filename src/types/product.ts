@@ -13,16 +13,27 @@ export type ProductSpec = {
   value: LocalizedText
 }
 
+export type ProductVariant = {
+  id: string
+  name: LocalizedText
+  price: number
+  sortOrder: number
+  isDefault: boolean
+  isActive: boolean
+  sku?: string
+}
+
 export type Product = {
   id: string
   name: LocalizedText
   description: LocalizedText
   detail: LocalizedText
   categoryId: string
-  price: number
   coverImage?: string
+  coverImages: string[]
   images: string[]
   specs: ProductSpec[]
+  variants: ProductVariant[]
   tags: string[]
   sortOrder: number
   isFeatured: boolean

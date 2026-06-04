@@ -1,4 +1,5 @@
 ﻿import { MapPin } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -8,6 +9,7 @@ import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
 import { locationService } from '../../services/locationService'
 import { orderService } from '../../services/orderService'
+import { defaultPhonePrefixes, storeSettingsService, type PhonePrefixOption } from '../../services/storeSettingsService'
 import type { SupportedLanguage } from '../../types/language'
 import type { LocationSnapshot } from '../../types/order'
 import type { Product } from '../../types/product'
@@ -24,7 +26,17 @@ function resolveLanguage(language: string): SupportedLanguage {
   return 'en'
 }
 
-function getLocationErrorMessage(error: unknown, fallback: string) {
+function getLocationErrorMessage(error: unknown, fallback: string, secureOriginMessage: string) {
+  const message = error instanceof Error ? error.message : error instanceof GeolocationPositionError ? error.message : ''
+
+  if (
+    !window.isSecureContext ||
+    message.includes('Origin does not have permission') ||
+    message.includes('Only secure origins are allowed')
+  ) {
+    return secureOriginMessage
+  }
+
   if (error instanceof GeolocationPositionError) {
     return error.message || fallback
   }
@@ -41,6 +53,9 @@ export function CheckoutPage() {
   const [cart, setCart] = useState<CartLine[]>(() => cartService.getCart())
   const [products, setProducts] = useState<Product[]>([])
   const [name, setName] = useState('')
+  const [phonePrefixes, setPhonePrefixes] = useState<PhonePrefixOption[]>(defaultPhonePrefixes)
+  const [phonePrefixId, setPhonePrefixId] = useState('cn')
+  const [customPhonePrefix, setCustomPhonePrefix] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [socialHandle, setSocialHandle] = useState('')
@@ -58,6 +73,27 @@ export function CheckoutPage() {
     void catalogService.listActiveProducts().then(setProducts)
   }, [])
 
+  useEffect(() => {
+    void storeSettingsService.getSettings().then((settings) => {
+      const activePrefixes = settings.phonePrefixes.filter((item) => item.isActive)
+      setPhonePrefixes(activePrefixes.length > 0 ? activePrefixes : defaultPhonePrefixes)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (products.length === 0 || cart.length === 0) {
+      return
+    }
+
+    const productIds = new Set(products.map((product) => product.id))
+    const validCart = cart.filter((line) => productIds.has(line.productId))
+
+    if (validCart.length !== cart.length) {
+      cartService.saveCart(validCart)
+      setCart(validCart)
+    }
+  }, [cart, products])
+
   const cartItems = useMemo(
     () =>
       cart
@@ -68,17 +104,30 @@ export function CheckoutPage() {
             return null
           }
 
+          const activeVariants = product.variants.filter((item) => item.isActive)
+          const variant = line.variantId
+            ? activeVariants.find((item) => item.id === line.variantId)
+            : activeVariants.find((item) => item.isDefault) ?? activeVariants[0]
+
+          if (!variant) {
+            return null
+          }
+
+          const unitPrice = variant.price
+
           return {
             line,
             product,
-            subtotal: product.price * line.quantity,
+            subtotal: unitPrice * line.quantity,
+            unitPrice,
+            variant: variant as Product['variants'][number],
           }
         })
-        .filter((item): item is { line: CartLine; product: Product; subtotal: number } => Boolean(item)),
+        .filter((item): item is { line: CartLine; product: Product; subtotal: number; unitPrice: number; variant: Product['variants'][number] } => Boolean(item)),
     [cart, products],
   )
 
-  const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0)
+  const checkoutTotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0)
 
   async function handleLocate() {
     setIsLocating(true)
@@ -88,17 +137,22 @@ export function CheckoutPage() {
       const position = await locationService.getBrowserPosition()
       const snapshot = await locationService.reverseGeocode(position, language)
       const coordinates = `${snapshot.latitude?.toFixed(6)}, ${snapshot.longitude?.toFixed(6)}`
+      const detectedAddress = snapshot.formattedAddress || coordinates
+      const detectedPlace = [snapshot.city, snapshot.country].filter(Boolean).join(', ')
       const locationLine = t('checkout.locationCoordinates', {
         accuracy: Math.round(snapshot.accuracy ?? 0),
         coordinates,
       })
+      const addressLine = detectedPlace
+        ? t('checkout.locationDetectedAddress', { address: detectedAddress, place: detectedPlace })
+        : locationLine
 
       setLocation(snapshot)
-      setAddress((current) => (current.trim() ? `${current}\n${locationLine}` : locationLine))
-      setLocationStatus(t('checkout.located'))
+      setAddress((current) => (current.trim() ? `${current}\n${detectedAddress}` : detectedAddress))
+      setLocationStatus(addressLine)
     } catch (error) {
       setLocation(null)
-      setLocationStatus(getLocationErrorMessage(error, t('checkout.locationFailed')))
+      setLocationStatus(getLocationErrorMessage(error, t('checkout.locationFailed'), t('checkout.locationRequiresSecureOrigin')))
     } finally {
       setIsLocating(false)
     }
@@ -114,7 +168,17 @@ export function CheckoutPage() {
       return
     }
 
-    if (!name.trim() || !phone.trim() || !address.trim()) {
+    const selectedPhonePrefix = phonePrefixes.find((item) => item.id === phonePrefixId) ?? phonePrefixes[0] ?? defaultPhonePrefixes[0]
+    const normalizedCustomPrefix = customPhonePrefix.trim().replace(/[^\d+]/g, '')
+    const phonePrefix = selectedPhonePrefix.isCustom
+      ? normalizedCustomPrefix.startsWith('+')
+        ? normalizedCustomPrefix
+        : `+${normalizedCustomPrefix}`
+      : selectedPhonePrefix.prefix
+    const localPhone = phone.replace(/\D/g, '')
+    const fullPhone = `${phonePrefix}${localPhone}`
+
+    if (!localPhone || (selectedPhonePrefix.isCustom && phonePrefix === '+')) {
       setValidationMessage(t('checkout.requiredFields'))
       return
     }
@@ -123,12 +187,12 @@ export function CheckoutPage() {
 
     try {
       const result = await orderService.submitOrder({
-        cart,
+        cart: cartItems.map(({ line }) => line),
         contact: {
           address: address.trim(),
           name: name.trim(),
           note: note.trim() || undefined,
-          phone: phone.trim(),
+          phone: fullPhone,
           socialHandle: socialHandle.trim() || undefined,
         },
         language,
@@ -149,30 +213,80 @@ export function CheckoutPage() {
   }
 
   return (
-    <section className="page-stack">
-      <PageHeader title={t('checkout.title')} />
+    <section className={submittedOrderId ? 'page-stack checkout-submitted' : 'page-stack'}>
+      <PageHeader
+        action={
+          submittedOrderId ? undefined : (
+            <Link className="secondary-button" to="/">
+              <ArrowLeft size={18} />
+              {t('checkout.continueShopping')}
+            </Link>
+          )
+        }
+        description={submittedOrderId ? t('checkout.receivedHint') : undefined}
+        title={t('checkout.title')}
+      />
       {submittedOrderId ? (
         <div className="form-card success-panel">
           <h2>{t('checkout.successTitle')}</h2>
           <p>{submitMessage}</p>
-          <Link className="secondary-button" to="/">
-            {t('checkout.continueShopping')}
-          </Link>
+          <p className="checkout-success-hint">{t('checkout.orderLookupHint')}</p>
+          <div className="checkout-success-actions">
+            <Link className="primary-button" to="/orders">
+              {t('checkout.viewMyOrders')}
+            </Link>
+            <Link className="secondary-button" to="/">
+              {t('checkout.continueShopping')}
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="checkout-panel">
           <form className="form-card" onSubmit={handleSubmit}>
             <label>
               {t('checkout.username')}
-              <input onChange={(event) => setName(event.target.value)} required type="text" value={name} />
+              <input onChange={(event) => setName(event.target.value)} type="text" value={name} />
             </label>
             <label>
-              {t('checkout.phone')}
-              <input onChange={(event) => setPhone(event.target.value)} required type="tel" value={phone} />
+              <span className="required-label">{t('checkout.mobilePhone')}</span>
+              <div className="phone-input-row">
+                <div className="phone-prefix-control">
+                  <select
+                    aria-label={t('checkout.phonePrefix')}
+                    onChange={(event) => setPhonePrefixId(event.target.value)}
+                    value={phonePrefixId}
+                  >
+                    {phonePrefixes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label[language]} {item.isCustom ? '' : item.prefix}
+                      </option>
+                    ))}
+                  </select>
+                  {phonePrefixes.find((item) => item.id === phonePrefixId)?.isCustom ? (
+                    <input
+                      aria-label={t('checkout.customPhonePrefix')}
+                      inputMode="tel"
+                      onChange={(event) => setCustomPhonePrefix(event.target.value)}
+                      placeholder="+"
+                      required
+                      type="tel"
+                      value={customPhonePrefix}
+                    />
+                  ) : null}
+                </div>
+                <input
+                  inputMode="tel"
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder={t('checkout.mobilePhonePlaceholder')}
+                  required
+                  type="tel"
+                  value={phone}
+                />
+              </div>
             </label>
             <label>
               {t('checkout.address')}
-              <textarea onChange={(event) => setAddress(event.target.value)} required rows={3} value={address} />
+              <textarea onChange={(event) => setAddress(event.target.value)} rows={3} value={address} />
             </label>
             <button className="secondary-button" disabled={isLocating} onClick={handleLocate} type="button">
               <MapPin size={18} />
@@ -209,20 +323,21 @@ export function CheckoutPage() {
               <p>{t('cart.empty')}</p>
             ) : (
               <div className="checkout-lines">
-                {cartItems.map(({ line, product, subtotal }) => (
-                  <div className="checkout-line" key={product.id}>
+                {cartItems.map(({ line, product, subtotal, unitPrice, variant }) => (
+                  <div className="checkout-line" key={`${product.id}-${line.variantId ?? 'default'}`}>
                     <span>{product.name[language]}</span>
+                    {variant ? <small>{variant.name[language]}</small> : null}
                     <small>
-                      {line.quantity} x ${product.price.toFixed(2)}
+                      {line.quantity} x ${unitPrice.toFixed(2)}
                     </small>
                     <strong>${subtotal.toFixed(2)}</strong>
                   </div>
                 ))}
               </div>
             )}
-            <div className="checkout-total">
+            <div className="checkout-total" data-total={checkoutTotal.toFixed(2)}>
               <span>{t('cart.total')}</span>
-              <strong>${total.toFixed(2)}</strong>
+              <strong>${checkoutTotal.toFixed(2)}</strong>
             </div>
             {cartItems.length === 0 ? (
               <Link className="secondary-button" to="/">

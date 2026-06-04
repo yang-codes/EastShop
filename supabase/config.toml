@@ -1,0 +1,11 @@
+[functions.submit-order]
+verify_jwt = false
+
+[functions.lookup-orders]
+verify_jwt = false
+
+[functions.cancel-order]
+verify_jwt = false
+
+[functions.translate-text]
+verify_jwt = true

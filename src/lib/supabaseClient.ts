@@ -6,6 +6,17 @@ export function isSupabaseConfigured() {
   return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
 }
 
+export function getSupabaseConfig() {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+  }
+
+  return {
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+    url: import.meta.env.VITE_SUPABASE_URL as string,
+  }
+}
+
 export function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
     throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')

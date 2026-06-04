@@ -27,6 +27,8 @@ export type OrderItemSnapshot = {
   productId: string
   productName: string
   language: SupportedLanguage
+  variantId?: string
+  variantName?: string
   unitPrice: number
   quantity: number
   subtotal: number

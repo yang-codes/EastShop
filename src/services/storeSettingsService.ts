@@ -1,0 +1,130 @@
+import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
+import type { LocalizedText } from '../types/language'
+
+export type PhonePrefixOption = {
+  id: string
+  label: LocalizedText
+  prefix: string
+  isActive: boolean
+  isCustom?: boolean
+  sortOrder: number
+}
+
+export type StoreSettings = {
+  phonePrefixes: PhonePrefixOption[]
+}
+
+type StoreSettingsRow = {
+  id: string
+  phone_prefixes: unknown
+}
+
+export const defaultPhonePrefixes: PhonePrefixOption[] = [
+  { id: 'cn', label: { zh: '中国', en: 'China', ru: 'Китай' }, prefix: '+86', isActive: true, sortOrder: 1 },
+  { id: 'kz', label: { zh: '哈萨克斯坦', en: 'Kazakhstan', ru: 'Казахстан' }, prefix: '+7', isActive: true, sortOrder: 2 },
+  { id: 'ru', label: { zh: '俄罗斯', en: 'Russia', ru: 'Россия' }, prefix: '+7', isActive: true, sortOrder: 3 },
+  { id: 'uz', label: { zh: '乌兹别克斯坦', en: 'Uzbekistan', ru: 'Узбекистан' }, prefix: '+998', isActive: true, sortOrder: 4 },
+  { id: 'kg', label: { zh: '吉尔吉斯斯坦', en: 'Kyrgyzstan', ru: 'Кыргызстан' }, prefix: '+996', isActive: true, sortOrder: 5 },
+  { id: 'tj', label: { zh: '塔吉克斯坦', en: 'Tajikistan', ru: 'Tajikistan' }, prefix: '+992', isActive: true, sortOrder: 6 },
+  { id: 'tm', label: { zh: '土库曼斯坦', en: 'Turkmenistan', ru: 'Туркменистан' }, prefix: '+993', isActive: true, sortOrder: 7 },
+  { id: 'other', label: { zh: '其他', en: 'Other', ru: 'Другое' }, prefix: '+', isActive: true, isCustom: true, sortOrder: 99 },
+]
+
+const defaultSettings: StoreSettings = {
+  phonePrefixes: defaultPhonePrefixes,
+}
+
+function normalizePrefix(prefix: string) {
+  const normalized = prefix.trim().replace(/[^\d+]/g, '')
+  if (!normalized) {
+    return '+'
+  }
+  return normalized.startsWith('+') ? normalized : `+${normalized}`
+}
+
+export function normalizePhonePrefixes(value: unknown): PhonePrefixOption[] {
+  if (!Array.isArray(value)) {
+    return defaultPhonePrefixes
+  }
+
+  const prefixes: PhonePrefixOption[] = []
+
+  value.forEach((item, index) => {
+    if (!item || typeof item !== 'object') {
+      return
+    }
+
+    const record = item as Partial<PhonePrefixOption>
+    const id = String(record.id ?? '').trim()
+    const label = record.label && typeof record.label === 'object' ? record.label : undefined
+    const zh = String(label?.zh ?? '').trim()
+    const en = String(label?.en ?? zh).trim()
+    const ru = String(label?.ru ?? zh).trim()
+
+    if (!id || !zh) {
+      return
+    }
+
+    prefixes.push({
+      id,
+      label: { zh, en: en || zh, ru: ru || zh },
+      prefix: normalizePrefix(String(record.prefix ?? '+')),
+      isActive: record.isActive ?? true,
+      isCustom: Boolean(record.isCustom),
+      sortOrder: Number(record.sortOrder ?? index + 1),
+    })
+  })
+
+  prefixes.sort((a, b) => a.sortOrder - b.sortOrder)
+
+  return prefixes.length > 0 ? prefixes : defaultPhonePrefixes
+}
+
+function mapSettings(row: StoreSettingsRow | null): StoreSettings {
+  if (!row) {
+    return defaultSettings
+  }
+
+  return {
+    phonePrefixes: normalizePhonePrefixes(row.phone_prefixes),
+  }
+}
+
+export const storeSettingsService = {
+  async getSettings(): Promise<StoreSettings> {
+    if (!isSupabaseConfigured()) {
+      return defaultSettings
+    }
+
+    const { data, error } = await getSupabaseClient()
+      .from('store_settings')
+      .select('id, phone_prefixes')
+      .eq('id', 'default')
+      .maybeSingle()
+
+    if (error) {
+      console.warn('Failed to load store settings, fallback to defaults:', error)
+      return defaultSettings
+    }
+
+    return mapSettings(data as StoreSettingsRow | null)
+  },
+
+  async saveSettings(settings: StoreSettings): Promise<StoreSettings> {
+    const phonePrefixes = normalizePhonePrefixes(settings.phonePrefixes)
+    const { data, error } = await getSupabaseClient()
+      .from('store_settings')
+      .upsert({
+        id: 'default',
+        phone_prefixes: phonePrefixes,
+      })
+      .select('id, phone_prefixes')
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return mapSettings(data as StoreSettingsRow)
+  },
+}

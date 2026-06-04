@@ -1,10 +1,14 @@
-﻿import { Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { catalogService } from '../../services/catalogService'
 import type { Category, Product } from '../../types/product'
+
+function getDisplayPrice(product: Product) {
+  return (product.variants.find((variant) => variant.isActive && variant.isDefault) ?? product.variants.find((variant) => variant.isActive))?.price ?? 0
+}
 
 export function StoreHomePage() {
   const { i18n, t } = useTranslation()
@@ -28,15 +32,12 @@ export function StoreHomePage() {
           catalogService.listActiveProducts(),
           catalogService.listActiveCategories(),
         ])
-        console.info('[EastShop] active products loaded:', activeProducts)
 
         if (isMounted) {
           setProducts(activeProducts)
           setCategories(activeCategories)
         }
       } catch (error) {
-        console.error('[EastShop] failed to load active products:', error)
-
         if (isMounted) {
           setErrorMessage(error instanceof Error ? error.message : String(error))
         }
@@ -81,22 +82,24 @@ export function StoreHomePage() {
     <section className="page-stack">
       <PageHeader description={t('store.heroText')} title={t('store.heroTitle')} />
       <div className="store-filter-bar">
-        <label className="search-field">
-          <Search size={18} />
-          <input onChange={(event) => setQuery(event.target.value)} placeholder={t('store.searchProducts')} type="search" value={query} />
-        </label>
-        <select aria-label={t('store.categoryFilter')} onChange={(event) => setCategoryId(event.target.value)} value={categoryId}>
-          <option value="all">{t('store.allCategories')}</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name[language]}
-            </option>
-          ))}
-        </select>
-        <label className="toggle-pill">
-          <input checked={featuredOnly} onChange={(event) => setFeaturedOnly(event.target.checked)} type="checkbox" />
-          {t('store.featuredOnly')}
-        </label>
+        <div className="store-search-combo">
+          <select aria-label={t('store.categoryFilter')} onChange={(event) => setCategoryId(event.target.value)} value={categoryId}>
+            <option value="all">{t('store.allCategories')}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name[language]}
+              </option>
+            ))}
+          </select>
+          <label className="search-field">
+            <Search size={18} />
+            <input onChange={(event) => setQuery(event.target.value)} placeholder={t('store.searchProducts')} type="search" value={query} />
+          </label>
+          <label className="toggle-pill">
+            <input checked={featuredOnly} onChange={(event) => setFeaturedOnly(event.target.checked)} type="checkbox" />
+            {t('store.featuredOnly')}
+          </label>
+        </div>
       </div>
       {isLoading ? <div className="form-card"><p>{t('common.loading')}</p></div> : null}
       {errorMessage ? <div className="form-card error-panel"><p>{errorMessage}</p></div> : null}
@@ -110,7 +113,7 @@ export function StoreHomePage() {
             <div>
               <h2>{product.name[language]}</h2>
               <p>{product.description[language]}</p>
-              <strong>{product.price > 0 ? `$${product.price.toFixed(2)}` : 'Inquiry'}</strong>
+              <strong>{getDisplayPrice(product) > 0 ? `$${getDisplayPrice(product).toFixed(2)}` : 'Inquiry'}</strong>
             </div>
           </Link>
         ))}

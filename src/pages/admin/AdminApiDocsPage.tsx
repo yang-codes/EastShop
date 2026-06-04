@@ -1,7 +1,7 @@
 import { ApiReferenceReact } from '@scalar/api-reference-react'
 import '@scalar/api-reference-react/style.css'
 import { PageHeader } from '../../components/PageHeader'
-import openApiContent from '../../../.codex/openapi.yaml?raw'
+import openApiContent from '../../../.md/openapi.yaml?raw'
 import { useTranslation } from 'react-i18next'
 
 export function AdminApiDocsPage() {

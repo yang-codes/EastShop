@@ -3,21 +3,27 @@
 export type CartLine = {
   productId: string
   quantity: number
+  variantId?: string
 }
 
 function normalizeCart(cart: CartLine[]) {
   return cart.filter((line) => line.productId && Number.isFinite(line.quantity) && line.quantity > 0)
 }
 
+function getLineKey(line: Pick<CartLine, 'productId' | 'variantId'>) {
+  return `${line.productId}::${line.variantId ?? ''}`
+}
+
 export const cartService = {
-  addItem(productId: string, quantity = 1) {
+  addItem(productId: string, quantity = 1, variantId?: string) {
     const cart = this.getCart()
-    const existingLine = cart.find((line) => line.productId === productId)
+    const lineKey = getLineKey({ productId, variantId })
+    const existingLine = cart.find((line) => getLineKey(line) === lineKey)
 
     if (existingLine) {
       existingLine.quantity += quantity
     } else {
-      cart.push({ productId, quantity })
+      cart.push({ productId, quantity, variantId })
     }
 
     this.saveCart(cart)
@@ -42,8 +48,9 @@ export const cartService = {
     }
   },
 
-  removeItem(productId: string) {
-    const cart = this.getCart().filter((line) => line.productId !== productId)
+  removeItem(productId: string, variantId?: string) {
+    const lineKey = getLineKey({ productId, variantId })
+    const cart = this.getCart().filter((line) => getLineKey(line) !== lineKey)
     this.saveCart(cart)
     return cart
   },
@@ -52,18 +59,19 @@ export const cartService = {
     localStorage.setItem(cartStorageKey, JSON.stringify(normalizeCart(cart)))
   },
 
-  updateQuantity(productId: string, quantity: number) {
+  updateQuantity(productId: string, quantity: number, variantId?: string) {
     if (quantity <= 0) {
-      return this.removeItem(productId)
+      return this.removeItem(productId, variantId)
     }
 
     const cart = this.getCart()
-    const existingLine = cart.find((line) => line.productId === productId)
+    const lineKey = getLineKey({ productId, variantId })
+    const existingLine = cart.find((line) => getLineKey(line) === lineKey)
 
     if (existingLine) {
       existingLine.quantity = quantity
     } else {
-      cart.push({ productId, quantity })
+      cart.push({ productId, quantity, variantId })
     }
 
     this.saveCart(cart)

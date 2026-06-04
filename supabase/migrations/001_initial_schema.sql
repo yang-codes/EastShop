@@ -23,7 +23,6 @@ create table if not exists public.products (
   detail_zh text not null default '',
   detail_en text not null default '',
   detail_ru text not null default '',
-  price numeric(12, 2) not null default 0 check (price >= 0),
   cover_image text,
   images jsonb not null default '[]'::jsonb,
   specs jsonb not null default '[]'::jsonb,
