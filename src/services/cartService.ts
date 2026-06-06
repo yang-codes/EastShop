@@ -14,6 +14,30 @@ function getLineKey(line: Pick<CartLine, 'productId' | 'variantId'>) {
   return `${line.productId}::${line.variantId ?? ''}`
 }
 
+function getStoredCart() {
+  try {
+    return window.localStorage.getItem(cartStorageKey)
+  } catch {
+    return null
+  }
+}
+
+function setStoredCart(cart: CartLine[]) {
+  try {
+    window.localStorage.setItem(cartStorageKey, JSON.stringify(normalizeCart(cart)))
+  } catch {
+    // Cart persistence can be unavailable in some embedded browsers; keep the UI usable for the current action.
+  }
+}
+
+function removeStoredCart() {
+  try {
+    window.localStorage.removeItem(cartStorageKey)
+  } catch {
+    // Ignore storage failures in embedded browsers.
+  }
+}
+
 export const cartService = {
   addItem(productId: string, quantity = 1, variantId?: string) {
     const cart = this.getCart()
@@ -31,11 +55,11 @@ export const cartService = {
   },
 
   clearCart() {
-    localStorage.removeItem(cartStorageKey)
+    removeStoredCart()
   },
 
   getCart(): CartLine[] {
-    const rawCart = localStorage.getItem(cartStorageKey)
+    const rawCart = getStoredCart()
 
     if (!rawCart) {
       return []
@@ -56,7 +80,7 @@ export const cartService = {
   },
 
   saveCart(cart: CartLine[]) {
-    localStorage.setItem(cartStorageKey, JSON.stringify(normalizeCart(cart)))
+    setStoredCart(cart)
   },
 
   updateQuantity(productId: string, quantity: number, variantId?: string) {

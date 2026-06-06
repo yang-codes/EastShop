@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AdminLayout } from './layouts/AdminLayout'
 import { StoreLayout } from './layouts/StoreLayout'
@@ -7,12 +7,27 @@ import { CheckoutPage } from '../pages/store/CheckoutPage'
 import { MyOrdersPage } from '../pages/store/MyOrdersPage'
 import { ProductDetailPage } from '../pages/store/ProductDetailPage'
 import { StoreHomePage } from '../pages/store/StoreHomePage'
-import { AdminCategoriesPage } from '../pages/admin/AdminCategoriesPage'
 import { AdminLoginPage } from '../pages/admin/AdminLoginPage'
-import { AdminNotificationsPage } from '../pages/admin/AdminNotificationsPage'
-import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage'
-import { AdminProductsPage } from '../pages/admin/AdminProductsPage'
-import { AdminStoreSettingsPage } from '../pages/admin/AdminStoreSettingsPage'
+
+const AdminCategoriesPage = lazy(() =>
+  import('../pages/admin/AdminCategoriesPage').then((module) => ({ default: module.AdminCategoriesPage })),
+)
+
+const AdminNotificationsPage = lazy(() =>
+  import('../pages/admin/AdminNotificationsPage').then((module) => ({ default: module.AdminNotificationsPage })),
+)
+
+const AdminOrdersPage = lazy(() =>
+  import('../pages/admin/AdminOrdersPage').then((module) => ({ default: module.AdminOrdersPage })),
+)
+
+const AdminProductsPage = lazy(() =>
+  import('../pages/admin/AdminProductsPage').then((module) => ({ default: module.AdminProductsPage })),
+)
+
+const AdminStoreSettingsPage = lazy(() =>
+  import('../pages/admin/AdminStoreSettingsPage').then((module) => ({ default: module.AdminStoreSettingsPage })),
+)
 
 const AdminApiDocsPage = lazy(() =>
   import('../pages/admin/AdminApiDocsPage').then((module) => ({ default: module.AdminApiDocsPage })),
@@ -26,6 +41,10 @@ function DocumentTitle() {
   }, [location.pathname])
 
   return null
+}
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<div className="form-card"><p>Loading...</p></div>}>{children}</Suspense>
 }
 
 export function AppRouter() {
@@ -43,17 +62,17 @@ export function AppRouter() {
         <Route path="admin/login" element={<AdminLoginPage />} />
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/products" replace />} />
-          <Route path="products" element={<AdminProductsPage />} />
-          <Route path="orders" element={<AdminOrdersPage />} />
-          <Route path="categories" element={<AdminCategoriesPage />} />
-          <Route path="store-settings" element={<AdminStoreSettingsPage />} />
-          <Route path="notifications" element={<AdminNotificationsPage />} />
+          <Route path="products" element={<LazyPage><AdminProductsPage /></LazyPage>} />
+          <Route path="orders" element={<LazyPage><AdminOrdersPage /></LazyPage>} />
+          <Route path="categories" element={<LazyPage><AdminCategoriesPage /></LazyPage>} />
+          <Route path="store-settings" element={<LazyPage><AdminStoreSettingsPage /></LazyPage>} />
+          <Route path="notifications" element={<LazyPage><AdminNotificationsPage /></LazyPage>} />
           <Route
             path="api-docs"
             element={
-              <Suspense fallback={<div className="form-card"><p>Loading...</p></div>}>
+              <LazyPage>
                 <AdminApiDocsPage />
-              </Suspense>
+              </LazyPage>
             }
           />
         </Route>
