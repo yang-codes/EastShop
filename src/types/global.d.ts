@@ -41,6 +41,7 @@ declare global {
           isLocationAvailable?: boolean
           openSettings?: () => void
         }
+        expand?: () => void
         ready?: () => void
       }
     }
