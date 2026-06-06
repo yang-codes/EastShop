@@ -28,6 +28,7 @@ type OrderRow = {
   note: string | null
   phone: string
   social_handle: string | null
+  social_platform: string | null
   source: EntrySource
   status: OrderStatus
   total: number
@@ -116,7 +117,9 @@ async function sendFeishuCancelNotification(settings: NotificationSettingsRow, o
     `金额：$${Number(order.total ?? 0).toFixed(2)}`,
     order.customer_name?.trim() ? `客户：${order.customer_name}` : '',
     `手机号：${order.phone}`,
-    order.social_handle?.trim() ? `社交账号：${order.social_handle}` : '',
+    order.social_handle?.trim()
+      ? `社交账号：${order.social_platform ? `${order.social_platform} ` : ''}${order.social_handle}`
+      : '',
     order.address?.trim() ? `地址：${order.address}` : '',
     order.note?.trim() ? `备注：${order.note}` : '',
     itemLines.length > 0 ? `\n商品：\n${itemLines.join('\n')}` : '',
@@ -197,6 +200,7 @@ Deno.serve(async (request) => {
           note,
           phone,
           social_handle,
+          social_platform,
           source,
           status,
           total,

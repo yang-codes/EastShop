@@ -8,8 +8,6 @@ export type NotificationSettings = {
 
 type NotificationSettingsRow = {
   feishu_enabled: boolean
-  feishu_secret: string | null
-  feishu_webhook: string | null
   id: string
 }
 
@@ -26,8 +24,8 @@ function mapSettings(row: NotificationSettingsRow | null): NotificationSettings 
 
   return {
     feishuEnabled: row.feishu_enabled,
-    feishuSecret: row.feishu_secret ?? '',
-    feishuWebhook: row.feishu_webhook ?? '',
+    feishuSecret: '',
+    feishuWebhook: '',
   }
 }
 
@@ -60,7 +58,7 @@ export const adminNotificationService = {
   async getSettings(): Promise<NotificationSettings> {
     const { data, error } = await getSupabaseClient()
       .from('notification_settings')
-      .select('id, feishu_enabled, feishu_webhook, feishu_secret')
+      .select('id, feishu_enabled')
       .eq('id', 'default')
       .maybeSingle()
 
@@ -72,15 +70,25 @@ export const adminNotificationService = {
   },
 
   async saveSettings(settings: NotificationSettings): Promise<NotificationSettings> {
+    const payload: Record<string, unknown> = {
+      feishu_enabled: settings.feishuEnabled,
+      id: 'default',
+    }
+    const nextWebhook = settings.feishuWebhook.trim()
+    const nextSecret = settings.feishuSecret.trim()
+
+    if (nextWebhook) {
+      payload.feishu_webhook = nextWebhook
+    }
+
+    if (nextSecret) {
+      payload.feishu_secret = nextSecret
+    }
+
     const { data, error } = await getSupabaseClient()
       .from('notification_settings')
-      .upsert({
-        feishu_enabled: settings.feishuEnabled,
-        feishu_secret: settings.feishuSecret.trim() || null,
-        feishu_webhook: settings.feishuWebhook.trim(),
-        id: 'default',
-      })
-      .select('id, feishu_enabled, feishu_webhook, feishu_secret')
+      .upsert(payload)
+      .select('id, feishu_enabled')
       .single()
 
     if (error) {

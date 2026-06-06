@@ -89,7 +89,11 @@ export function AdminNotificationsPage() {
       }
 
       const savedSettings = await adminNotificationService.saveSettings(settings)
-      setSettings(savedSettings)
+      setSettings((current) => ({
+        ...current,
+        feishuEnabled: savedSettings.feishuEnabled,
+        feishuSecret: '',
+      }))
       setStatusMessage(t('admin.notificationSaved'))
       scrollAdminPageToTop()
     } catch (error) {

@@ -9,6 +9,8 @@
 - [x] 购物车页增加“继续选购”入口，便于返回商品列表继续加购。
 - [x] 下单页表单受控化，增加基础校验。
 - [x] `orderService.submitOrder` 接入 Supabase Edge Function 调用。
+- [x] 下单页地址反查改为调用 `reverse-geocode` Edge Function，Geoapify key 不再暴露到前端。
+- [x] 下单页定位改为 Telegram Mini App 优先调用 `LocationManager`，Web/Instagram 兜底使用浏览器原生定位。
 - [x] 前台新增“我的订单”入口和 `/orders` 查询页。
 - [x] 支持手机号 + 订单号 / 手机号 + 社交账号查询订单。
 - [x] 查询结果展示订单状态、商品、规格、数量、金额、地址和下单时间。
@@ -59,7 +61,8 @@
 - [x] 部署 `submit-order` Edge Function 到 Supabase。
 - [x] 部署 `lookup-orders` Edge Function 到 Supabase，并验证前台“我的订单”查询。
 - [x] Telegram `initData` 服务端校验。
-- [x] Web/Instagram 下单来源标记。
+- [x] Telegram Mini App “我的订单”支持通过验签 `initData` 自动查询本人订单，无需输入手机号、订单号或社交账号。
+- [x] Web/Instagram 下单来源标记；Instagram 支持内置浏览器/referrer 自动识别，并在当前会话中记住来源。
 - [x] 订单管理列表和详情卡片骨架。
 - [x] CSV/XLSX 导出开发态订单。
 - [x] 订单状态真实更新。
@@ -68,12 +71,26 @@
 - [x] 后台侧边栏新增“通知配置”菜单。
 - [x] 新增 `/admin/store-settings` 店铺配置页，用于维护提交订单和我的订单查询页的手机号前缀下拉选项。
 - [x] 在 Supabase SQL Editor 执行 `supabase/migrations/009_store_settings.sql`，创建 `store_settings` 表和 RLS。
+- [x] 店铺配置支持维护社媒平台来源下拉选项，默认 Telegram、Instagram、Facebook 和其他。
+- [x] 新增 `supabase/migrations/011_social_platform_settings.sql`，为 `store_settings` 增加 `social_platforms`，为 `orders` 增加 `social_platform`。
+- [x] 下单页社交账号改为“平台来源下拉 + 账号输入”，订单后台、订单查询和飞书通知可展示平台来源。
 - [x] 新增 `notification_settings` Supabase 表、表权限和仅管理员可读写的 RLS 策略。
 - [x] 通知配置页支持保存飞书通知启用状态、机器人 webhook 和签名密钥。
 - [x] 通知配置页增加测试发送按钮，用于验证飞书机器人是否可用。
 - [x] `submit-order` 成功写入订单后读取通知配置并发送飞书订单通知。
 - [x] 新增 `cancel-order` Edge Function，用户取消新订单后同步发送飞书取消通知。
+- [x] 新增 `reverse-geocode` Edge Function，服务端代理 Geoapify 地址反查。
+- [ ] 部署 `reverse-geocode` Edge Function，并配置 Supabase secret `GEOAPIFY_API_KEY`。
 - [x] 飞书通知发送失败时记录错误，但不影响订单提交成功响应。
+- [x] `submit-order` 增加 honeypot、IP 级限流（默认 10 次/分钟）、手机号级限流（默认 3 次/10 分钟）和 5 分钟重复订单检测（按手机号、来源、金额、商品/规格/数量指纹判断）。
+- [x] 新增 `supabase/migrations/013_order_duplicate_guard.sql`，写入 `orders.cart_fingerprint` 并用数据库触发器阻止同手机号、来源、金额、商品/规格/数量指纹在 5 分钟内重复插入。
+reverse-geocode
+-[]配制ALLOWED_ORIGINS（supabase secrets set ALLOWED_ORIGINS="https://你的域名.com,https://你的用户名.github.io"
+）
+-[x]增加 Origin allowlist：读取 Supabase secret/env ALLOWED_ORIGINS，127.0.0.1 默认允许，方便本地开发。增加 IP 级限流：默认 30 次/分钟。
+
+- [ ] 在 Supabase SQL Editor 执行 `supabase/migrations/013_order_duplicate_guard.sql` 或运行 `supabase db push`。
+- [ ] 重新部署 `submit-order` Edge Function，确保重复订单检测、honeypot 和限流在线上生效。
 - [ ] 权限回归测试。
 
 ## Documentation
@@ -95,9 +112,13 @@
 - [x] 后台管理在 mock 模式下可用。
 - [ ] 配置 Supabase 后真实数据读取正常。
 - [ ] Telegram Mini App 下单验证正常。
+- [ ] Telegram Mini App 进入“我的订单”会自动按 Telegram 身份查询本人订单。
 - [ ] 管理员可以进入 `/admin/notifications` 并保存通知配置。
 - [ ] 非管理员无法读取或修改 `notification_settings`。
+- [ ] 管理员可以在 `/admin/store-settings` 配置社媒平台来源，并在下单页看到启用项。
+- [ ] 订单提交、订单查询和取消订单通知均能保留并展示社媒平台来源。
 - [x] 飞书测试发送成功时目标飞书群收到测试消息。
 - [ ] 订单提交成功时飞书群收到订单通知，通知失败时订单仍提交成功。
 - [ ] 前台“我的订单”中取消新订单后状态变为已取消，且飞书群收到取消通知。
+- [ ] 同手机号、同来源、同金额、同商品/规格/数量的订单在 5 分钟内第二次提交返回 `409 DUPLICATE_ORDER`，后台不会新增第二单。
 - [ ] GitHub Pages 深度链接 `/#/product/:productId` 可直接打开。

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../../components/PageHeader'
+import { getTelegramInitData } from '../../lib/source'
 import { orderService } from '../../services/orderService'
 import { defaultPhonePrefixes, storeSettingsService, type PhonePrefixOption } from '../../services/storeSettingsService'
 import type { Order } from '../../types/order'
@@ -46,6 +47,7 @@ export function MyOrdersPage() {
   const [message, setMessage] = useState('')
   const [cancellingOrderId, setCancellingOrderId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [telegramInitData, setTelegramInitData] = useState('')
 
   const selectedPhonePrefix = useMemo(
     () => phonePrefixes.find((item) => item.id === phonePrefixId) ?? phonePrefixes[0] ?? defaultPhonePrefixes[0],
@@ -57,6 +59,35 @@ export function MyOrdersPage() {
       const activePrefixes = settings.phonePrefixes.filter((item) => item.isActive)
       setPhonePrefixes(activePrefixes.length > 0 ? activePrefixes : defaultPhonePrefixes)
     })
+  }, [])
+
+  async function lookupWithTelegramIdentity(initData: string) {
+    if (!initData) {
+      return
+    }
+
+    setMessage('')
+    setIsLoading(true)
+
+    try {
+      const result = await orderService.lookupOrders({ telegramInitData: initData })
+      setOrders(result)
+      setMessage(result.length > 0 ? t('myOrders.resultCount', { count: result.length }) : t('myOrders.empty'))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t('myOrders.telegramLookupFailed'))
+      setOrders([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const initData = getTelegramInitData()
+    setTelegramInitData(initData)
+
+    if (initData) {
+      void lookupWithTelegramIdentity(initData)
+    }
   }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -147,8 +178,25 @@ export function MyOrdersPage() {
         title={t('myOrders.title')}
       />
 
-      <section className="form-card order-lookup-card">
-        <form className="order-lookup-form" onSubmit={handleSubmit}>
+      {telegramInitData ? (
+        <section className="form-card order-lookup-card telegram-order-lookup-card">
+          <div>
+            <strong>{t('myOrders.telegramDetected')}</strong>
+            <p>{t('myOrders.telegramDetectedDescription')}</p>
+          </div>
+          <button
+            className="primary-button"
+            disabled={isLoading}
+            onClick={() => void lookupWithTelegramIdentity(telegramInitData)}
+            type="button"
+          >
+            <Search size={16} />
+            {isLoading ? t('myOrders.searching') : t('myOrders.telegramRefresh')}
+          </button>
+        </section>
+      ) : (
+        <section className="form-card order-lookup-card">
+          <form className="order-lookup-form" onSubmit={handleSubmit}>
           <label className="order-lookup-phone">
             {t('myOrders.phone')}
             <div className="phone-input-row">
@@ -225,8 +273,9 @@ export function MyOrdersPage() {
             <Search size={16} />
             {isLoading ? t('myOrders.searching') : t('myOrders.submit')}
           </button>
-        </form>
-      </section>
+          </form>
+        </section>
+      )}
 
       {message ? <p className={orders.length > 0 ? 'notice success' : 'notice'}>{message}</p> : null}
 

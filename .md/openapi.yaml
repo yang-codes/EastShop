@@ -302,13 +302,15 @@ paths:
         - Edge Functions
       summary: Lookup storefront orders
       description: >
-        Public self-service order lookup. The request must include mobile phone plus
-        either order ID or social account. The function reads live order status and
-        order items with service_role privileges.
+        Public self-service order lookup. Web and Instagram requests must include
+        mobile phone plus either order ID or social account. Telegram Mini App
+        requests can provide verified initData so the function can look up orders
+        by Telegram user ID. The function reads live order status and order items
+        with service_role privileges.
       security:
         - SupabaseAnonKey: []
       requestBody:
-        description: 业务用途：前台客户用手机号组合订单号或社交账号查询自己的订单。
+        description: 业务用途：前台客户用手机号组合订单号/社交账号查询自己的订单；Telegram Mini App 可用 initData 验签身份后直接查询本人订单。
         required: true
         content:
           application/json:
@@ -367,6 +369,39 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Order status no longer allows customer cancellation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /functions/v1/reverse-geocode:
+    post:
+      tags:
+        - Edge Functions
+      summary: Reverse geocode browser coordinates
+      description: >
+        Public address reverse-geocoding proxy. The browser sends latitude,
+        longitude, accuracy and language; the Edge Function reads Geoapify
+        credentials from Supabase secrets and returns a normalized location
+        snapshot. Geoapify failures fall back to coordinates so checkout is not
+        blocked.
+      security:
+        - SupabaseAnonKey: []
+      requestBody:
+        description: 业务用途：前台下单页把浏览器定位坐标转换成可读地址，不在前端暴露 Geoapify key。
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseGeocodeRequest'
+      responses:
+        '200':
+          description: Location snapshot or coordinate fallback.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseGeocodeResponse'
+        '400':
+          description: Invalid coordinates.
           content:
             application/json:
               schema:
@@ -643,6 +678,11 @@ components:
           type:
             - string
             - 'null'
+        social_platform:
+          description: 客户选择的社媒平台来源，如 telegram、instagram、facebook。
+          type:
+            - string
+            - 'null'
         address:
           type: string
           description: 客户确认后的详细地址。
@@ -736,6 +776,9 @@ components:
         socialHandle:
           type: string
           description: 社交账号，便于人工联系。
+        socialPlatform:
+          type: string
+          description: 社媒平台来源代码，如 telegram、instagram、facebook；与 socialHandle 配套使用。
         note:
           type: string
           description: 客户备注。
@@ -767,6 +810,41 @@ components:
         formattedAddress:
           type: string
           description: 反查完整格式化地址。
+    ReverseGeocodeRequest:
+      type: object
+      description: 业务用途：前台下单页提交浏览器定位坐标给 Edge Function 做地址反查。
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          description: 定位纬度。
+          example: 43.238949
+        longitude:
+          type: number
+          description: 定位经度。
+          example: 76.889709
+        accuracy:
+          type: number
+          description: 浏览器定位精度，单位米。
+          example: 38
+        language:
+          type: string
+          description: 地址反查语言。
+          enum:
+            - zh
+            - en
+            - ru
+          example: zh
+    ReverseGeocodeResponse:
+      type: object
+      description: 业务用途：地址反查结果；失败时仍返回经纬度兜底。
+      required:
+        - location
+      properties:
+        location:
+          $ref: '#/components/schemas/LocationSnapshot'
     SubmitOrderRequest:
       type: object
       description: 业务用途：前台唯一订单提交请求，不能包含可信价格，价格必须由服务端重算。
@@ -819,20 +897,24 @@ components:
           $ref: '#/components/schemas/OrderStatus'
     LookupOrdersRequest:
       type: object
-      description: 业务用途：前台“我的订单”查询请求。
-      required:
-        - phone
+      description: 业务用途：前台“我的订单”查询请求。Web/Instagram 使用手机号组合订单号或社交账号；Telegram Mini App 可使用验签 initData 直接查询本人订单。
       properties:
         phone:
           type: string
-          description: 完整国际手机号。
+          description: Web/Instagram 查询时的完整国际手机号。
           example: '+8613800000000'
         orderId:
           type: string
-          description: 订单号；与手机号组合查询。
+          description: 订单号；Web/Instagram 与手机号组合查询。
         socialHandle:
           type: string
-          description: 社交账号；与手机号组合查询。
+          description: 社交账号；Web/Instagram 与手机号组合查询。
+        socialPlatform:
+          type: string
+          description: 社媒平台来源代码；可与手机号和社交账号组合查询。
+        telegramInitData:
+          type: string
+          description: Telegram Mini App initData；服务端验签后按 Telegram user.id 查询本人订单。
     LookupOrdersResponse:
       type: object
       description: 业务用途：前台订单查询结果，状态来自当前订单表。

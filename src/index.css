@@ -261,6 +261,15 @@ p {
   outline: 0;
 }
 
+.checkout-honeypot {
+  height: 1px;
+  left: -9999px;
+  overflow: hidden;
+  position: absolute;
+  top: auto;
+  width: 1px;
+}
+
 .store-filter-bar {
   align-items: center;
   display: grid;
@@ -2651,6 +2660,34 @@ p {
   background: linear-gradient(180deg, #ffffff, #f8fbff);
 }
 
+.telegram-order-lookup-card {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.telegram-order-lookup-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.telegram-order-lookup-card strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.telegram-order-lookup-card p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.telegram-order-lookup-card .primary-button {
+  justify-content: center;
+  min-height: 44px;
+  min-width: 168px;
+}
+
 .order-lookup-form {
   align-items: end;
   display: grid;
@@ -2844,6 +2881,15 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .telegram-order-lookup-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .telegram-order-lookup-card .primary-button {
+    width: 100%;
+  }
+
   .lookup-mode-row {
     width: 100%;
   }
@@ -2932,4 +2978,28 @@ p {
 .success-panel {
   border-color: rgba(23, 128, 71, 0.35);
   color: var(--success);
+}
+.social-contact-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.32fr) minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.social-contact-row select,
+.social-contact-row input {
+  min-width: 0;
+  width: 100%;
+}
+
+.store-settings-divider {
+  height: 1px;
+  margin: 24px 0;
+  background: var(--border);
+}
+
+@media (max-width: 640px) {
+  .social-contact-row {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
 }

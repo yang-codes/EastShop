@@ -5,9 +5,12 @@ import { PageHeader } from '../../components/PageHeader'
 import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import {
   defaultPhonePrefixes,
+  defaultSocialPlatforms,
   normalizePhonePrefixes,
+  normalizeSocialPlatforms,
   storeSettingsService,
   type PhonePrefixOption,
+  type SocialPlatformOption,
 } from '../../services/storeSettingsService'
 import { translationService } from '../../services/translationService'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
@@ -32,18 +35,38 @@ function getErrorMessage(error: unknown) {
   return String(error)
 }
 
+function createSocialPlatformDraft(sortOrder: number): SocialPlatformOption {
+  const timestamp = Date.now()
+  return {
+    code: `platform-${timestamp}`,
+    id: `platform-${timestamp}`,
+    isActive: true,
+    label: { zh: '', en: '', ru: '' },
+    sortOrder,
+  }
+}
+
+function normalizePlatformCodeInput(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+}
+
 export function AdminStoreSettingsPage() {
   const { t } = useTranslation()
   const prefixCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const prefixNameInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const platformCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const platformNameInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const [phonePrefixes, setPhonePrefixes] = useState<PhonePrefixOption[]>(defaultPhonePrefixes)
+  const [socialPlatforms, setSocialPlatforms] = useState<SocialPlatformOption[]>(defaultSocialPlatforms)
   const [errorMessage, setErrorMessage] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [autoFillingPrefixId, setAutoFillingPrefixId] = useState('')
+  const [autoFillingPlatformId, setAutoFillingPlatformId] = useState('')
   const [pendingScrollPrefixId, setPendingScrollPrefixId] = useState('')
-  const isAutoFilling = Boolean(autoFillingPrefixId)
+  const [pendingScrollPlatformId, setPendingScrollPlatformId] = useState('')
+  const isAutoFilling = Boolean(autoFillingPrefixId || autoFillingPlatformId)
 
   useEffect(() => {
     let isMounted = true
@@ -56,6 +79,7 @@ export function AdminStoreSettingsPage() {
         const settings = await storeSettingsService.getSettings()
         if (isMounted) {
           setPhonePrefixes(settings.phonePrefixes)
+          setSocialPlatforms(settings.socialPlatforms)
         }
       } catch (error) {
         if (isMounted) {
@@ -91,6 +115,20 @@ export function AdminStoreSettingsPage() {
 
     return () => window.cancelAnimationFrame(frameId)
   }, [pendingScrollPrefixId, phonePrefixes])
+
+  useEffect(() => {
+    if (!pendingScrollPlatformId) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      platformCardRefs.current[pendingScrollPlatformId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      platformNameInputRefs.current[pendingScrollPlatformId]?.focus()
+      setPendingScrollPlatformId('')
+    }, 50)
+
+    return () => window.clearTimeout(timer)
+  }, [pendingScrollPlatformId, socialPlatforms])
 
   function updatePrefix(index: number, patch: Partial<PhonePrefixOption>) {
     setPhonePrefixes((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)))
@@ -167,6 +205,74 @@ export function AdminStoreSettingsPage() {
     }
   }
 
+  function updatePlatform(index: number, patch: Partial<SocialPlatformOption>) {
+    setSocialPlatforms((items) => items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)))
+  }
+
+  function updatePlatformLabel(index: number, language: 'zh' | 'en' | 'ru', value: string) {
+    setSocialPlatforms((items) => items.map((item, itemIndex) => (
+      itemIndex === index
+        ? { ...item, label: { ...item.label, [language]: value } }
+        : item
+    )))
+  }
+
+  function addPlatform() {
+    const draft = createSocialPlatformDraft(socialPlatforms.length + 1)
+    setSocialPlatforms((items) => [...items, draft])
+    setPendingScrollPlatformId(draft.id)
+    setStatusMessage('')
+    setErrorMessage('')
+  }
+
+  function removePlatform(index: number) {
+    setSocialPlatforms((items) => items.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  async function handleAutoFillSocialPlatform(index: number) {
+    const item = socialPlatforms[index]
+    const sourceText = item?.label.zh.trim()
+
+    if (!item || !sourceText) {
+      setErrorMessage(t('admin.storeSettingsAutoFillRequiresChinese'))
+      setStatusMessage('')
+      return
+    }
+
+    if (item.label.en.trim() && item.label.ru.trim()) {
+      setStatusMessage(t('admin.storeSettingsAutoFillNothing'))
+      setErrorMessage('')
+      return
+    }
+
+    setAutoFillingPlatformId(item.id)
+    setStatusMessage('')
+    setErrorMessage('')
+
+    try {
+      const result = await translationService.translateFromChinese(sourceText)
+      setSocialPlatforms((items) => items.map((current, itemIndex) => {
+        if (itemIndex !== index) {
+          return current
+        }
+
+        return {
+          ...current,
+          label: {
+            ...current.label,
+            en: current.label.en.trim() ? current.label.en : result.en,
+            ru: current.label.ru.trim() ? current.label.ru : result.ru,
+          },
+        }
+      }))
+      setStatusMessage(t('admin.storeSettingsAutoFillPlatformDone'))
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : t('admin.translationFailed'))
+    } finally {
+      setAutoFillingPlatformId('')
+    }
+  }
+
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSaving(true)
@@ -178,16 +284,26 @@ export function AdminStoreSettingsPage() {
         ...item,
         sortOrder: index + 1,
       }))
+      const normalizedSocialPlatforms = normalizeSocialPlatforms(socialPlatforms).map((item, index) => ({
+        ...item,
+        code: normalizePlatformCodeInput(item.code) || item.id,
+        sortOrder: index + 1,
+      }))
 
       if (!isSupabaseConfigured()) {
         setPhonePrefixes(normalized)
+        setSocialPlatforms(normalizedSocialPlatforms)
         setStatusMessage(t('admin.savedLocally'))
         scrollAdminPageToTop()
         return
       }
 
-      const saved = await storeSettingsService.saveSettings({ phonePrefixes: normalized })
+      const saved = await storeSettingsService.saveSettings({
+        phonePrefixes: normalized,
+        socialPlatforms: normalizedSocialPlatforms,
+      })
       setPhonePrefixes(saved.phonePrefixes)
+      setSocialPlatforms(saved.socialPlatforms)
       setStatusMessage(t('admin.storeSettingsSaved'))
       scrollAdminPageToTop()
     } catch (error) {
@@ -291,6 +407,96 @@ export function AdminStoreSettingsPage() {
                 <label className="checkbox-label status-toggle-item">
                   <span>{t('admin.customPhonePrefixOption')}</span>
                   <input checked={Boolean(item.isCustom)} onChange={(event) => updatePrefix(index, { isCustom: event.target.checked })} type="checkbox" />
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="store-settings-divider" />
+
+        <div className="section-title-row">
+          <div>
+            <h2>{t('admin.socialPlatformSettings')}</h2>
+            <p>{t('admin.socialPlatformSettingsHelp')}</p>
+          </div>
+          <div className="section-actions">
+            <button
+              className="secondary-button"
+              disabled={isLoading || isSaving || isAutoFilling}
+              onClick={addPlatform}
+              type="button"
+            >
+              <Plus size={18} />
+              {t('admin.addSocialPlatform')}
+            </button>
+          </div>
+        </div>
+
+        <div className="phone-prefix-admin-list">
+          {socialPlatforms.map((item, index) => (
+            <div className="phone-prefix-admin-item" key={item.id} ref={(node) => { platformCardRefs.current[item.id] = node }}>
+              <div className="phone-prefix-admin-header">
+                <div>
+                  <strong>
+                    {t('admin.socialPlatformItem')} {index + 1}
+                  </strong>
+                  <p>
+                    {item.label.zh || item.label.en || item.label.ru || t('admin.unnamedSocialPlatform')}
+                    {item.code ? ` · ${item.code}` : ''}
+                  </p>
+                </div>
+                <div className="section-actions">
+                  <button
+                    className="secondary-button"
+                    disabled={isAutoFilling}
+                    onClick={() => void handleAutoFillSocialPlatform(index)}
+                    type="button"
+                  >
+                    <Languages size={16} />
+                    {autoFillingPlatformId === item.id ? t('admin.autoFillingTranslations') : t('admin.storeSettingsAutoFillOneSocialPlatform')}
+                  </button>
+                  <button className="danger-button" onClick={() => removePlatform(index)} type="button">
+                    {t('admin.delete')}
+                  </button>
+                </div>
+              </div>
+
+              <div className="phone-prefix-fields phone-prefix-name-fields">
+                <label>
+                  {t('admin.nameZh')}
+                  <input
+                    onChange={(event) => updatePlatformLabel(index, 'zh', event.target.value)}
+                    ref={(node) => { platformNameInputRefs.current[item.id] = node }}
+                    value={item.label.zh}
+                  />
+                </label>
+                <label>
+                  {t('admin.nameEn')}
+                  <input onChange={(event) => updatePlatformLabel(index, 'en', event.target.value)} value={item.label.en} />
+                </label>
+                <label>
+                  {t('admin.nameRu')}
+                  <input onChange={(event) => updatePlatformLabel(index, 'ru', event.target.value)} value={item.label.ru} />
+                </label>
+              </div>
+
+              <div className="phone-prefix-fields phone-prefix-meta-fields">
+                <label>
+                  {t('admin.socialPlatformCode')}
+                  <input onChange={(event) => updatePlatform(index, { code: normalizePlatformCodeInput(event.target.value) })} value={item.code} />
+                </label>
+                <label>
+                  {t('admin.sortOrder')}
+                  <input min="1" onChange={(event) => updatePlatform(index, { sortOrder: Number(event.target.value) })} type="number" value={item.sortOrder} />
+                </label>
+                <label className="checkbox-card">
+                  <span>{t('admin.enabled')}</span>
+                  <input
+                    checked={item.isActive}
+                    onChange={(event) => updatePlatform(index, { isActive: event.target.checked })}
+                    type="checkbox"
+                  />
                 </label>
               </div>
             </div>

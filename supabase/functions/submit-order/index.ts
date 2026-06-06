@@ -14,6 +14,7 @@ type CheckoutContact = {
   name: string
   note?: string
   phone: string
+  socialPlatform?: string
   socialHandle?: string
 }
 
@@ -29,6 +30,7 @@ type LocationSnapshot = {
 type SubmitOrderInput = {
   cart?: CartLine[]
   contact?: CheckoutContact
+  companyWebsite?: string
   language?: SupportedLanguage
   location?: LocationSnapshot
   source?: EntrySource
@@ -57,6 +59,27 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Origin': '*',
 }
+
+type OrderDuplicateCandidate = {
+  cart_fingerprint?: string | null
+  id: string
+  total?: number | string | null
+  order_items?: Array<{
+    product_id: string
+    quantity: number
+    variant_id?: string | null
+  }>
+}
+
+const requestRateLimitBuckets = new Map<string, { count: number; resetAt: number }>()
+const phoneRateLimitBuckets = new Map<string, { count: number; resetAt: number }>()
+const notificationThrottleBuckets = new Map<string, number>()
+const REQUEST_RATE_LIMIT_WINDOW_MS = 60_000
+const REQUEST_RATE_LIMIT_MAX = 10
+const PHONE_RATE_LIMIT_WINDOW_MS = 10 * 60_000
+const PHONE_RATE_LIMIT_MAX = 3
+const DUPLICATE_ORDER_WINDOW_MS = 5 * 60_000
+const FEISHU_NOTIFICATION_THROTTLE_MS = 60_000
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -101,6 +124,39 @@ function assertContact(contact: SubmitOrderInput['contact']) {
   }
 }
 
+function normalizePhone(value: string) {
+  return value.trim().replace(/[^\d+]/g, '')
+}
+
+function getClientKey(request: Request) {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')?.trim()
+    || request.headers.get('cf-connecting-ip')?.trim()
+    || 'unknown'
+}
+
+function assertRateLimit(bucketMap: Map<string, { count: number; resetAt: number }>, key: string, windowMs: number, maxRequests: number) {
+  const now = Date.now()
+  const bucket = bucketMap.get(key)
+
+  if (!bucket || bucket.resetAt <= now) {
+    bucketMap.set(key, { count: 1, resetAt: now + windowMs })
+    return
+  }
+
+  if (bucket.count >= maxRequests) {
+    throw new ResponseError('RATE_LIMITED', 'Too many requests. Try again later.', 429)
+  }
+
+  bucket.count += 1
+}
+
+function assertHoneypot(input: SubmitOrderInput) {
+  if (typeof input.companyWebsite === 'string' && input.companyWebsite.trim()) {
+    throw new ResponseError('INVALID_REQUEST', 'Invalid request.', 400)
+  }
+}
+
 function normalizeCart(cart: SubmitOrderInput['cart']) {
   if (!Array.isArray(cart) || cart.length === 0) {
     throw new ResponseError('EMPTY_CART', 'Cart is empty.', 400)
@@ -127,6 +183,29 @@ function normalizeCart(cart: SubmitOrderInput['cart']) {
   }
 
   return [...quantities.values()]
+}
+
+function getCartFingerprint(lines: Array<Pick<CartLine, 'productId' | 'quantity' | 'variantId'>>) {
+  return lines
+    .map((line) => `${line.productId}::${line.variantId ?? ''}::${line.quantity}`)
+    .sort()
+    .join('|')
+}
+
+function getBeijingTimestampFromUnixMs(value: number) {
+  return new Date(value + 8 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19)
+}
+
+function isSameMoneyValue(candidate: number | string | null | undefined, expected: number) {
+  const candidateNumber = Number(candidate)
+
+  return Number.isFinite(candidateNumber) && candidateNumber.toFixed(2) === expected.toFixed(2)
+}
+
+function isDuplicateOrderDatabaseError(error: unknown) {
+  const message = formatUnknownError(error)
+
+  return message.includes('DUPLICATE_ORDER')
 }
 
 function getLocalizedName(product: ProductRow, language: SupportedLanguage) {
@@ -252,6 +331,20 @@ async function verifyTelegramInitData(initData: string, botToken: string, maxAge
   }
 }
 
+function getTelegramUserId(user: Record<string, unknown> | null) {
+  const rawId = user?.id
+
+  if (typeof rawId === 'number' && Number.isFinite(rawId)) {
+    return String(Math.trunc(rawId))
+  }
+
+  if (typeof rawId === 'string') {
+    return rawId.trim()
+  }
+
+  return ''
+}
+
 async function hmacSha256Base64(keyText: string, text: string) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(keyText), { hash: 'SHA-256', name: 'HMAC' }, false, ['sign'])
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(text))
@@ -271,6 +364,75 @@ function getSourceLabel(source: EntrySource) {
   return 'Web'
 }
 
+function normalizeSocialPlatform(value: unknown) {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+  return normalized || null
+}
+
+function getSocialContactLine(contact: CheckoutContact) {
+  const handle = contact.socialHandle?.trim()
+  if (!handle) {
+    return ''
+  }
+
+  const platform = normalizeSocialPlatform(contact.socialPlatform)
+  return `社交账号：${platform ? `${platform} ` : ''}${handle}`
+}
+
+async function assertNotDuplicateOrder(
+  supabase: ReturnType<typeof createClient>,
+  phone: string,
+  source: EntrySource,
+  total: number,
+  cartFingerprint: string,
+) {
+  const duplicateSince = getBeijingTimestampFromUnixMs(Date.now() - DUPLICATE_ORDER_WINDOW_MS)
+  const { data, error } = await supabase
+    .from('orders')
+    .select('id, total, cart_fingerprint, order_items(product_id, variant_id, quantity)')
+    .eq('phone', phone)
+    .eq('source', source)
+    .gte('created_at', duplicateSince)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) {
+    throw new ResponseError('DUPLICATE_CHECK_FAILED', formatUnknownError(error), 500)
+  }
+
+  const duplicate = ((data ?? []) as OrderDuplicateCandidate[]).find((order) => {
+    if (!isSameMoneyValue(order.total, total)) {
+      return false
+    }
+
+    if (order.cart_fingerprint) {
+      return order.cart_fingerprint === cartFingerprint
+    }
+
+    return getCartFingerprint((order.order_items ?? []).map((item) => ({
+      productId: item.product_id,
+      quantity: Number(item.quantity),
+      variantId: item.variant_id ?? undefined,
+    }))) === cartFingerprint
+  })
+
+  if (duplicate) {
+    throw new ResponseError('DUPLICATE_ORDER', 'A matching order was submitted recently. Please wait before submitting again.', 409)
+  }
+}
+
+function shouldThrottleFeishuNotification(key: string) {
+  const now = Date.now()
+  const lastSentAt = notificationThrottleBuckets.get(key) ?? 0
+
+  if (now - lastSentAt < FEISHU_NOTIFICATION_THROTTLE_MS) {
+    return true
+  }
+
+  notificationThrottleBuckets.set(key, now)
+  return false
+}
+
 async function sendFeishuNotification(settings: NotificationSettingsRow, order: { id: string; source: EntrySource; total: number }, contact: CheckoutContact, items: Array<{ productName: string; quantity: number; subtotal: number; variant_name?: string | null }>) {
   if (!settings.feishu_enabled) {
     console.log('Feishu notification skipped: disabled')
@@ -282,6 +444,11 @@ async function sendFeishuNotification(settings: NotificationSettingsRow, order: 
     return
   }
 
+  if (shouldThrottleFeishuNotification(`${contact.phone}:${order.source}`)) {
+    console.log(`Feishu notification skipped: throttled order=${order.id}`)
+    return
+  }
+
   const timestamp = Math.floor(Date.now() / 1000).toString()
   const contentLines = [
     `新订单：${order.id}`,
@@ -289,7 +456,7 @@ async function sendFeishuNotification(settings: NotificationSettingsRow, order: 
     `金额：$${order.total.toFixed(2)}`,
     contact.name?.trim() ? `客户：${contact.name}` : '',
     `手机号：${contact.phone}`,
-    contact.socialHandle ? `社交账号：${contact.socialHandle}` : '',
+    getSocialContactLine(contact),
     contact.address?.trim() ? `地址：${contact.address}` : '',
     contact.note?.trim() ? `备注：${contact.note}` : '',
     '',
@@ -348,13 +515,35 @@ Deno.serve(async (request) => {
       throw new ResponseError('MISSING_SERVER_CONFIG', 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not configured.', 500)
     }
 
+    assertRateLimit(
+      requestRateLimitBuckets,
+      `submit-order:${getClientKey(request)}`,
+      REQUEST_RATE_LIMIT_WINDOW_MS,
+      REQUEST_RATE_LIMIT_MAX,
+    )
+
     const input = (await request.json()) as SubmitOrderInput
+    assertHoneypot(input)
+
     const language = input.language === 'zh' || input.language === 'ru' ? input.language : 'en'
     const source = input.source === 'telegram' || input.source === 'instagram' || input.source === 'web' ? input.source : 'web'
     let telegramUser: Record<string, unknown> | null = null
     let telegramAuthDate: number | null = null
+    let telegramUserId: string | null = null
 
     assertContact(input.contact)
+    const normalizedPhone = normalizePhone(input.contact?.phone ?? '')
+
+    if (!normalizedPhone) {
+      throw new ResponseError('INVALID_CONTACT', 'Mobile phone is required.', 400)
+    }
+
+    assertRateLimit(
+      phoneRateLimitBuckets,
+      `submit-order-phone:${normalizedPhone}`,
+      PHONE_RATE_LIMIT_WINDOW_MS,
+      PHONE_RATE_LIMIT_MAX,
+    )
 
     if (source === 'telegram') {
       if (!input.telegramInitData) {
@@ -371,6 +560,11 @@ Deno.serve(async (request) => {
       const verification = await verifyTelegramInitData(input.telegramInitData, telegramBotToken, maxAgeSeconds)
       telegramUser = verification.user
       telegramAuthDate = verification.authDate
+      telegramUserId = getTelegramUserId(telegramUser)
+
+      if (!telegramUserId) {
+        throw new ResponseError('INVALID_TELEGRAM_INIT_DATA', 'Telegram initData user id is missing.', 401)
+      }
     }
 
     const cart = normalizeCart(input.cart)
@@ -431,13 +625,17 @@ Deno.serve(async (request) => {
     })
 
     const total = Number(items.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2))
-    const contact = input.contact as CheckoutContact
+    const contact = { ...(input.contact as CheckoutContact), phone: normalizedPhone }
     const location = input.location
+    const cartFingerprint = getCartFingerprint(cart)
+
+    await assertNotDuplicateOrder(supabase, normalizedPhone, source, total, cartFingerprint)
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         address: contact.address?.trim() ?? '',
+        cart_fingerprint: cartFingerprint,
         customer_name: contact.name?.trim() ?? '',
         geo_city: location?.city ?? null,
         geo_country: location?.country ?? null,
@@ -447,17 +645,23 @@ Deno.serve(async (request) => {
         location_accuracy: location?.accuracy ?? null,
         longitude: location?.longitude ?? null,
         note: contact.note?.trim() || null,
-        phone: contact.phone.trim(),
+        phone: normalizedPhone,
         social_handle: contact.socialHandle?.trim() || null,
+        social_platform: normalizeSocialPlatform(contact.socialPlatform),
         source,
         status: 'new',
         telegram_user: source === 'telegram' ? { authDate: telegramAuthDate, initDataVerified: true, user: telegramUser } : null,
+        telegram_user_id: source === 'telegram' ? telegramUserId : null,
         total,
       })
       .select('id, status, total')
       .single()
 
     if (orderError) {
+      if (isDuplicateOrderDatabaseError(orderError)) {
+        throw new ResponseError('DUPLICATE_ORDER', 'A matching order was submitted recently. Please wait before submitting again.', 409)
+      }
+
       throw new ResponseError('ORDER_INSERT_FAILED', formatUnknownError(orderError), 500)
     }
 

@@ -170,6 +170,37 @@ function draftVariantToVariant(variant: ProductVariantDraft): ProductVariant | n
   }
 }
 
+function isEmptyVariantDraft(variant: ProductVariantDraft) {
+  return [variant.nameEn, variant.nameRu, variant.nameZh, variant.price, variant.sku].every((value) => !value.trim())
+}
+
+function validateProductDraft(draft: ProductDraft) {
+  const contentVariants = draft.variants.filter((variant) => !isEmptyVariantDraft(variant))
+
+  for (const [index, variant] of contentVariants.entries()) {
+    const hasDisplayName = Boolean(variant.nameZh.trim() || variant.nameEn.trim())
+    const price = Number(variant.price)
+
+    if (!hasDisplayName) {
+      return `Variant ${index + 1}: enter a Chinese or English name.`
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      return `Variant ${index + 1}: price must be greater than 0.`
+    }
+  }
+
+  if (draft.isActive && !contentVariants.some((variant) => variant.isActive)) {
+    return 'Active products need at least one enabled purchasable variant.'
+  }
+
+  if (contentVariants.filter((variant) => variant.isDefault).length > 1) {
+    return 'Only one sales variant can be marked as default.'
+  }
+
+  return ''
+}
+
 function getAdminErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message
@@ -671,9 +702,18 @@ export function AdminProductsPage() {
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setIsSaving(true)
     setErrorMessage('')
     setStatusMessage('')
+
+    const validationError = validateProductDraft(draft)
+
+    if (validationError) {
+      setErrorMessage(validationError)
+      scrollAdminPageToTop()
+      return
+    }
+
+    setIsSaving(true)
 
     const product = draftToProduct(draft)
 

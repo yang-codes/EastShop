@@ -8,12 +8,12 @@
 ## Environment Variables
 - `VITE_SUPABASE_URL`：Supabase 项目 URL。
 - `VITE_SUPABASE_ANON_KEY`：Supabase anon key，用于公开读取和登录。
-- `VITE_GEOAPIFY_API_KEY`：Geoapify Reverse Geocoding key，用于地址反查。
 
 服务端 secrets：
 - `TELEGRAM_BOT_TOKEN`：Telegram Bot Token，只能放在 Edge Function secrets。
 - `TELEGRAM_INIT_DATA_MAX_AGE_SECONDS`：可选，Telegram Mini App `initData` 最大有效秒数；默认 `86400`，设置为 `0` 可关闭过期时间检查。
 - `SUPABASE_SERVICE_ROLE_KEY`：Supabase service role key，只能放在 Edge Function secrets。
+- `GEOAPIFY_API_KEY`：Geoapify Reverse Geocoding key，只能放在 Edge Function secrets，由 `reverse-geocode` 读取。
 - `TENCENTCLOUD_SECRET_ID`：腾讯云 SecretId，只能放在 Edge Function secrets。
 - `TENCENTCLOUD_SECRET_KEY`：腾讯云 SecretKey，只能放在 Edge Function secrets。
 - `TENCENT_TRANSLATE_REGION`：可选，腾讯云机器翻译地域；默认 `ap-guangzhou`。
@@ -71,11 +71,12 @@
 存储 key：`eastshop.cart`
 
 ### `locationService.getBrowserPosition()`
-用途：请求浏览器定位。
+用途：请求前台当前位置。Telegram Mini App 环境优先调用 `Telegram.WebApp.LocationManager.getLocation()`，失败后回退到浏览器原生 `navigator.geolocation.getCurrentPosition()`；Web 和 Instagram 入口当前使用浏览器原生定位。
 
 返回：`Promise<GeolocationPosition>`
 
 错误：
+- Telegram 客户端定位不可用时会回退浏览器 Geolocation API。
 - 浏览器不支持定位时抛出 `GEOLOCATION_UNSUPPORTED`。
 - 用户拒绝或超时由浏览器 Geolocation API 返回错误。
 
@@ -89,23 +90,24 @@
 返回：`Promise<LocationSnapshot>`
 
 当前状态：
-- 已接入 Geoapify Reverse Geocoding；配置 `VITE_GEOAPIFY_API_KEY` 后补充 `country`、`city`、`district`、`street`、`formattedAddress`。
-- 未配置 Geoapify key 或接口失败时降级返回经纬度和精度。
+- 已接入 `reverse-geocode` Supabase Edge Function；Geoapify key 只保存在服务端 secret `GEOAPIFY_API_KEY`。
+- 未配置 Supabase、未配置 Geoapify key 或接口失败时降级返回经纬度和精度。
 
 ### `orderService.submitOrder(input)`
 用途：提交前台订单。
 
 参数：
 - `cart`：购物车商品 ID 和数量。
-- `contact`：客户姓名、完整国际手机号、地址、备注、社交账号。
+- `contact`：客户姓名、完整国际手机号、地址、备注、社媒平台来源和社交账号。
 - `language`：当前下单语言。
 - `location`：定位与地址反查快照。
-- `source`：`telegram`、`instagram`、`web`。
+- `source`：`telegram`、`instagram`、`web`；前端会优先读取 URL `source`，其次自动识别 Telegram WebApp 和 Instagram 内置浏览器/referrer，并在当前浏览会话中记住来源。
 - `telegramInitData`：Telegram Mini App 初始化数据。
 
 当前状态：
 - 未配置 Supabase 时返回本地预览订单号，用于开发态跑通前台闭环。
 - 配置 Supabase 后调用 `submit-order` Edge Function。
+- 服务端会做 honeypot、IP 限流、手机号限流和 5 分钟重复订单检测；同手机号、来源、金额、商品/规格/数量指纹重复提交时应返回 `409 DUPLICATE_ORDER`。
 - 服务端验证 Telegram `initData`。
 - 服务端重新读取商品价格和上架状态。
 - 服务端写入 `orders` 和 `order_items`。
@@ -114,13 +116,15 @@
 用途：前台“我的订单”查询。
 
 参数：
-- `phone`：必填，完整国际手机号。
-- `orderId`：可选，订单号；与手机号组合查询。
-- `socialHandle`：可选，社交账号；与手机号组合查询。
+- `phone`：Web/Instagram 查询时必填，完整国际手机号。
+- `orderId`：可选，订单号；Web/Instagram 与手机号组合查询。
+- `socialPlatform`：可选，社媒平台来源代码；与 `socialHandle` 配套保存和展示。
+- `socialHandle`：可选，社交账号；Web/Instagram 与手机号组合查询。
+- `telegramInitData`：可选，Telegram Mini App 初始化数据；服务端验签后按 Telegram 用户 ID 查询本人订单。
 
 规则：
-- 手机号必须填写。
-- `orderId` 和 `socialHandle` 至少填写一个。
+- Telegram Mini App 环境优先使用 `telegramInitData` 自动查询本人订单，不需要用户再输入手机号、订单号或社交账号。
+- Web/Instagram 环境仍需要手机号，并且 `orderId` 和 `socialHandle` 至少填写一个。
 - 后台修改 `orders.status` 后，前台再次查询会读取最新状态。
 
 返回：
@@ -225,9 +229,10 @@
 
 后台店铺配置 API：
 
-- `storeSettingsService.getSettings()`：读取公开店铺配置，当前用于手机号国家/地区前缀下拉框；未配置 Supabase 或读取失败时回退默认中亚/中国/俄罗斯/其他列表。
+- `storeSettingsService.getSettings()`：读取公开店铺配置，当前用于手机号国家/地区前缀下拉框和社媒平台来源下拉框；未配置 Supabase 或读取失败时回退默认中亚/中国/俄罗斯/其他列表以及 Telegram/Instagram/Facebook/其他平台列表。
 - `storeSettingsService.saveSettings(settings)`：管理员保存店铺配置，写入 `store_settings` 单例行。
 - `phonePrefixes`：手机号前缀配置数组，字段包含 `id`、三语 `label`、`prefix`、`isActive`、`isCustom`、`sortOrder`。
+- `socialPlatforms`：社媒平台来源配置数组，字段包含 `id`、三语 `label`、`code`、`isActive`、`isCustom`、`sortOrder`。
 - 浏览器直接测试发送可能受飞书 webhook CORS 策略影响；订单通知由 `submit-order` Edge Function 服务端发送。
 
 ## Edge Function API
@@ -237,22 +242,35 @@
 
 访问控制：
 - 该函数用于公开下单，部署时关闭 Edge Function JWT 校验。
+- 函数内部会重新校验商品、规格、价格、来源和 Telegram 身份；前端传入价格不可信。
+- 下单请求包含隐藏 honeypot 字段 `companyWebsite`，正常用户应为空；非空会被视为异常自动提交。
+- 限流策略：默认同 IP 30 次/分钟；默认同手机号 3 次/10 分钟。
+- 重复订单策略：按手机号、来源、金额和购物车指纹判断，购物车指纹由商品 ID、规格 ID 和数量组成；5 分钟内完全相同订单返回 `409 DUPLICATE_ORDER`。
+- 重复订单保护有两层：Edge Function 提交前查询近期候选订单；数据库迁移 `013_order_duplicate_guard.sql` 会新增 `orders.cart_fingerprint` 和触发器 `prevent_recent_duplicate_order`，在插入层兜底阻止重复订单。
 - 前端只发送 Supabase `apikey` 请求头；函数内部使用服务端权限重新校验商品、价格和来源。
-- Supabase 数据库必须授予 `service_role` 必要表权限：`products select`、`orders select/insert/delete`、`order_items insert`；飞书通知配置启用时还需要 `notification_settings select`。
+- Supabase 数据库必须授予 `service_role` 必要表权限：`products select`、`orders select/insert/delete`、`order_items insert`；飞书通知配置启用时还需要 `notification_settings select`。如需保存社媒平台来源，需先执行 `011_social_platform_settings.sql` 增加 `orders.social_platform`。
 
 ### `POST /functions/v1/lookup-orders`
 用途：前台订单自助查询。
 
 访问控制：
 - 该函数用于公开订单查询，部署时关闭 Edge Function JWT 校验。
-- 函数内部要求手机号，并且必须同时提供订单号或社交账号，降低订单被枚举的风险。
-- Supabase 数据库必须授予 `service_role` 必要表权限：`orders select`、`order_items select`。
+- Web/Instagram 查询要求手机号，并且必须同时提供订单号或社交账号，降低订单被枚举的风险。
+- Telegram Mini App 查询可只提交 `telegramInitData`；函数使用 `TELEGRAM_BOT_TOKEN` 验签，提取 Telegram `user.id` 后按 `orders.telegram_user_id` 查询本人订单。
+- Supabase 数据库必须授予 `service_role` 必要表权限：`orders select`、`order_items select`。Telegram 自动查询还需要执行 `012_telegram_order_identity.sql` 创建 `orders.telegram_user_id` 和索引。
 
 请求体：
 ```json
 {
   "phone": "+8613800000000",
   "orderId": "ORD-20260602-ABC12345"
+}
+```
+
+Telegram Mini App 自动查询请求体：
+```json
+{
+  "telegramInitData": "query_id=...&user=...&auth_date=...&hash=..."
 }
 ```
 
@@ -284,6 +302,7 @@
 ```json
 {
   "phone": "+8613800000000",
+  "socialPlatform": "instagram",
   "socialHandle": "eastshop_user"
 }
 ```
@@ -326,6 +345,7 @@
     "name": "Aruzhan",
     "phone": "+7 701 000 1020",
     "address": "Almaty, Dostyk Ave 85",
+    "socialPlatform": "instagram",
     "socialHandle": "@aruzhan_shop",
     "note": "Need delivery quote before confirmation."
   },
@@ -369,6 +389,43 @@
 - 必须重新计算价格和总价。
 - 必须写入 `orders` 和 `order_items`，订单明细需要保存规格 ID 和规格名称快照。
 - 前端传入的价格和总价一律不可信。
+
+### `POST /functions/v1/reverse-geocode`
+用途：把前台定位得到的经纬度转换为地址快照。
+
+访问控制：
+- 该函数用于公开地址反查，部署时关闭 Edge Function JWT 校验。
+- Geoapify API key 必须保存在 Supabase Edge Function secret：`GEOAPIFY_API_KEY`。
+- 前端只发送经纬度、精度和语言，不暴露 Geoapify key。
+
+请求体：
+```json
+{
+  "latitude": 43.238949,
+  "longitude": 76.889709,
+  "accuracy": 38,
+  "language": "zh"
+}
+```
+
+响应体：
+```json
+{
+  "location": {
+    "latitude": 43.238949,
+    "longitude": 76.889709,
+    "accuracy": 38,
+    "country": "Kazakhstan",
+    "city": "Almaty",
+    "district": "Bostandyk District",
+    "street": "Dostyk Ave",
+    "formattedAddress": "Dostyk Ave 85, Almaty"
+  }
+}
+```
+
+降级规则：
+- 未配置 `GEOAPIFY_API_KEY`、Geoapify 返回异常或网络失败时，函数仍返回经纬度和精度，避免下单流程被地址反查阻断。
 
 ## Data Types
 

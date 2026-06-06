@@ -5,6 +5,7 @@ import type { SupportedLanguage } from '../types/language'
 
 export type SubmitOrderInput = {
   cart: CartLine[]
+  companyWebsite?: string
   contact: CheckoutContact
   language: SupportedLanguage
   location?: LocationSnapshot
@@ -18,10 +19,23 @@ export type SubmitOrderResult = {
   total: number
 }
 
+export class OrderServiceError extends Error {
+  code?: string
+  status: number
+
+  constructor(message: string, status: number, code?: string) {
+    super(message)
+    this.code = code
+    this.status = status
+  }
+}
+
 export type LookupOrdersInput = {
-  phone: string
+  phone?: string
   orderId?: string
+  socialPlatform?: string
   socialHandle?: string
+  telegramInitData?: string
 }
 
 export type CancelOrderInput = {
@@ -69,9 +83,10 @@ export const orderService = {
     }
 
     if (!response.ok) {
+      const code = data?.code ?? data?.error
       const serverMessage = [data?.message, data?.details, data?.hint, data?.code ? `(${data.code})` : ''].filter(Boolean).join(' ')
 
-      throw new Error(serverMessage || responseText || `submit-order Edge Function returned HTTP ${response.status}.`)
+      throw new OrderServiceError(serverMessage || responseText || `submit-order Edge Function returned HTTP ${response.status}.`, response.status, code)
     }
 
     if (!data?.orderId) {
@@ -92,7 +107,7 @@ export const orderService = {
   },
 
   /**
-   * 用手机号 + 订单号或手机号 + 社交账号查询前台订单。
+   * 用手机号 + 订单号、手机号 + 社交账号，或 Telegram Mini App 验签身份查询前台订单。
    * 业务用途：客户自助查看自己的订单状态，后台改状态后这里实时读取最新数据。
    */
   async lookupOrders(input: LookupOrdersInput): Promise<Order[]> {

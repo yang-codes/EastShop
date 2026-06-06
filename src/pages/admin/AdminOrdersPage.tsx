@@ -205,12 +205,12 @@ export function AdminOrdersPage() {
                 <MapPin size={16} />
                 <span>{order.contact.address}</span>
               </div>
-              {order.contact.socialHandle ? (
-                <p>
-                  <strong>{t('checkout.social')}：</strong>
-                  {order.contact.socialHandle}
-                </p>
-              ) : null}
+            {order.contact.socialHandle ? (
+              <p>
+                <strong>{t('checkout.social')}：</strong>
+                {[order.contact.socialPlatform, order.contact.socialHandle].filter(Boolean).join(' ')}
+              </p>
+            ) : null}
               {order.contact.note ? <p>{order.contact.note}</p> : null}
             </div>
           </article>

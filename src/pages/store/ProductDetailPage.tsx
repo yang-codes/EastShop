@@ -192,6 +192,7 @@ export function ProductDetailPage() {
   const entrySource = detectEntrySource()
   const showProductSwitcher = entrySource === 'web'
   const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
   const [products, setProducts] = useState<Product[]>([])
 
@@ -214,6 +215,7 @@ export function ProductDetailPage() {
 
     let isMounted = true
     setIsLoading(true)
+    setErrorMessage('')
 
     void Promise.all([catalogService.getProductById(productId), catalogService.listActiveProducts()])
       .then(([loadedProduct, activeProducts]) => {
@@ -229,6 +231,15 @@ export function ProductDetailPage() {
         if (!loadedProduct && resolvedProduct && resolvedProduct.id !== productId) {
           navigate(`/product/${resolvedProduct.id}`, { replace: true })
         }
+      })
+      .catch((error) => {
+        if (!isMounted) {
+          return
+        }
+
+        setProduct(null)
+        setProducts([])
+        setErrorMessage(error instanceof Error ? error.message : String(error))
       })
       .finally(() => {
         if (isMounted) {
@@ -267,7 +278,7 @@ export function ProductDetailPage() {
       <section className="page-stack">
         <PageHeader description={productId} title={t('store.productUnavailableTitle')} />
         <div className="form-card product-unavailable-card">
-          <p>{t('store.productUnavailableDescription')}</p>
+          <p>{errorMessage || t('store.productUnavailableDescription')}</p>
           <button className="secondary-button" onClick={() => navigate('/')} type="button">
             <ArrowLeft size={18} />
             {t('navigation.home')}

@@ -9,6 +9,7 @@ export type CheckoutContact = {
   phone: string
   address: string
   note?: string
+  socialPlatform?: string
   socialHandle?: string
 }
 

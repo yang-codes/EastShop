@@ -8,8 +8,14 @@ import { detectEntrySource } from '../../lib/source'
 import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
 import { locationService } from '../../services/locationService'
-import { orderService } from '../../services/orderService'
-import { defaultPhonePrefixes, storeSettingsService, type PhonePrefixOption } from '../../services/storeSettingsService'
+import { orderService, OrderServiceError } from '../../services/orderService'
+import {
+  defaultPhonePrefixes,
+  defaultSocialPlatforms,
+  storeSettingsService,
+  type PhonePrefixOption,
+  type SocialPlatformOption,
+} from '../../services/storeSettingsService'
 import type { SupportedLanguage } from '../../types/language'
 import type { LocationSnapshot } from '../../types/order'
 import type { Product } from '../../types/product'
@@ -48,6 +54,32 @@ function getLocationErrorMessage(error: unknown, fallback: string, secureOriginM
   return fallback
 }
 
+const submitErrorTranslationKeys: Record<string, string> = {
+  DUPLICATE_ORDER: 'checkout.submitErrors.duplicateOrder',
+  EMPTY_CART: 'checkout.emptyCart',
+  INVALID_CART_LINE: 'checkout.submitErrors.invalidCart',
+  INVALID_CONTACT: 'checkout.requiredFields',
+  INVALID_REQUEST: 'checkout.submitErrors.invalidRequest',
+  INVALID_TELEGRAM_INIT_DATA: 'checkout.submitErrors.invalidTelegram',
+  PRODUCT_INACTIVE: 'checkout.submitErrors.productUnavailable',
+  PRODUCT_NOT_FOUND: 'checkout.submitErrors.productUnavailable',
+  PRODUCT_VARIANT_NOT_FOUND: 'checkout.submitErrors.productUnavailable',
+  PRODUCT_VARIANT_REQUIRED: 'checkout.submitErrors.productUnavailable',
+  RATE_LIMITED: 'checkout.submitErrors.rateLimited',
+}
+
+function getSubmitErrorMessage(error: unknown, translate: (key: string) => string, fallback: string) {
+  if (error instanceof OrderServiceError && error.code) {
+    const translationKey = submitErrorTranslationKeys[error.code]
+
+    if (translationKey) {
+      return translate(translationKey)
+    }
+  }
+
+  return fallback
+}
+
 export function CheckoutPage() {
   const { i18n, t } = useTranslation()
   const [cart, setCart] = useState<CartLine[]>(() => cartService.getCart())
@@ -58,11 +90,16 @@ export function CheckoutPage() {
   const [customPhonePrefix, setCustomPhonePrefix] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [companyWebsite, setCompanyWebsite] = useState('')
+  const [socialPlatforms, setSocialPlatforms] = useState<SocialPlatformOption[]>(defaultSocialPlatforms)
+  const [socialPlatformId, setSocialPlatformId] = useState('telegram')
   const [socialHandle, setSocialHandle] = useState('')
   const [note, setNote] = useState('')
   const [location, setLocation] = useState<LocationSnapshot | null>(null)
   const [locationStatus, setLocationStatus] = useState('')
   const [isLocating, setIsLocating] = useState(false)
+  const [catalogErrorMessage, setCatalogErrorMessage] = useState('')
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
   const [validationMessage, setValidationMessage] = useState('')
   const [submitMessage, setSubmitMessage] = useState('')
   const [submittedOrderId, setSubmittedOrderId] = useState('')
@@ -70,13 +107,42 @@ export function CheckoutPage() {
   const language = resolveLanguage(i18n.language)
 
   useEffect(() => {
-    void catalogService.listActiveProducts().then(setProducts)
-  }, [])
+    let isMounted = true
+
+    async function loadProducts() {
+      setIsLoadingProducts(true)
+      setCatalogErrorMessage('')
+
+      try {
+        const nextProducts = await catalogService.listActiveProducts()
+
+        if (isMounted) {
+          setProducts(nextProducts)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setCatalogErrorMessage(error instanceof Error ? error.message : t('checkout.submitFailed'))
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProducts(false)
+        }
+      }
+    }
+
+    void loadProducts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [t])
 
   useEffect(() => {
     void storeSettingsService.getSettings().then((settings) => {
       const activePrefixes = settings.phonePrefixes.filter((item) => item.isActive)
       setPhonePrefixes(activePrefixes.length > 0 ? activePrefixes : defaultPhonePrefixes)
+      const activeSocialPlatforms = settings.socialPlatforms.filter((item) => item.isActive)
+      setSocialPlatforms(activeSocialPlatforms.length > 0 ? activeSocialPlatforms : defaultSocialPlatforms)
     })
   }, [])
 
@@ -163,6 +229,16 @@ export function CheckoutPage() {
     setValidationMessage('')
     setSubmitMessage('')
 
+    if (isLoadingProducts) {
+      setValidationMessage(t('common.loading'))
+      return
+    }
+
+    if (catalogErrorMessage) {
+      setValidationMessage(catalogErrorMessage)
+      return
+    }
+
     if (cartItems.length === 0) {
       setValidationMessage(t('checkout.emptyCart'))
       return
@@ -177,6 +253,11 @@ export function CheckoutPage() {
       : selectedPhonePrefix.prefix
     const localPhone = phone.replace(/\D/g, '')
     const fullPhone = `${phonePrefix}${localPhone}`
+    const normalizedSocialHandle = socialHandle.trim()
+    const selectedSocialPlatform =
+      socialPlatforms.find((item) => item.id === socialPlatformId)
+      ?? socialPlatforms[0]
+      ?? defaultSocialPlatforms[0]
 
     if (!localPhone || (selectedPhonePrefix.isCustom && phonePrefix === '+')) {
       setValidationMessage(t('checkout.requiredFields'))
@@ -188,12 +269,14 @@ export function CheckoutPage() {
     try {
       const result = await orderService.submitOrder({
         cart: cartItems.map(({ line }) => line),
+        companyWebsite,
         contact: {
           address: address.trim(),
           name: name.trim(),
           note: note.trim() || undefined,
           phone: fullPhone,
-          socialHandle: socialHandle.trim() || undefined,
+          socialHandle: normalizedSocialHandle || undefined,
+          socialPlatform: normalizedSocialHandle ? selectedSocialPlatform.code : undefined,
         },
         language,
         location: location ?? undefined,
@@ -206,7 +289,7 @@ export function CheckoutPage() {
       setSubmittedOrderId(result.orderId)
       setSubmitMessage(t('checkout.orderSubmitted', { orderId: result.orderId }))
     } catch (error) {
-      setSubmitMessage(error instanceof Error ? error.message : t('checkout.submitFailed'))
+      setSubmitMessage(getSubmitErrorMessage(error, t, t('checkout.submitFailed')))
     } finally {
       setIsSubmitting(false)
     }
@@ -243,6 +326,16 @@ export function CheckoutPage() {
       ) : (
         <div className="checkout-panel">
           <form className="form-card" onSubmit={handleSubmit}>
+            <label className="checkout-honeypot" aria-hidden="true">
+              Company website
+              <input
+                autoComplete="off"
+                onChange={(event) => setCompanyWebsite(event.target.value)}
+                tabIndex={-1}
+                type="text"
+                value={companyWebsite}
+              />
+            </label>
             <label>
               {t('checkout.username')}
               <input onChange={(event) => setName(event.target.value)} type="text" value={name} />
@@ -293,7 +386,7 @@ export function CheckoutPage() {
               {isLocating ? t('checkout.locating') : t('checkout.locate')}
             </button>
             {locationStatus ? <p className="location-status">{locationStatus}</p> : null}
-            {location?.latitude && location.longitude ? (
+            {location?.latitude != null && location.longitude != null ? (
               <a
                 className="map-link"
                 href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
@@ -305,21 +398,43 @@ export function CheckoutPage() {
             ) : null}
             <label>
               {t('checkout.social')}
-              <input onChange={(event) => setSocialHandle(event.target.value)} type="text" value={socialHandle} />
+              <div className="social-contact-row">
+                <select
+                  aria-label={t('checkout.socialPlatform')}
+                  onChange={(event) => setSocialPlatformId(event.target.value)}
+                  value={socialPlatformId}
+                >
+                  {socialPlatforms.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label[language] || item.label.zh}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  aria-label={t('checkout.socialHandle')}
+                  onChange={(event) => setSocialHandle(event.target.value)}
+                  placeholder={t('checkout.socialHandlePlaceholder')}
+                  type="text"
+                  value={socialHandle}
+                />
+              </div>
             </label>
             <label>
               {t('checkout.note')}
               <textarea onChange={(event) => setNote(event.target.value)} rows={2} value={note} />
             </label>
             {validationMessage ? <p className="auth-message error">{validationMessage}</p> : null}
+            {catalogErrorMessage ? <p className="auth-message error">{catalogErrorMessage}</p> : null}
             {submitMessage ? <p className="auth-message error">{submitMessage}</p> : null}
-            <button className="primary-button" disabled={isSubmitting || cartItems.length === 0} type="submit">
+            <button className="primary-button" disabled={isSubmitting || isLoadingProducts || Boolean(catalogErrorMessage) || cartItems.length === 0} type="submit">
               {isSubmitting ? t('checkout.submitting') : t('checkout.submit')}
             </button>
           </form>
           <aside className="cart-summary checkout-summary">
             <h2>{t('checkout.orderSummary')}</h2>
-            {cartItems.length === 0 ? (
+            {isLoadingProducts ? (
+              <p>{t('common.loading')}</p>
+            ) : cartItems.length === 0 ? (
               <p>{t('cart.empty')}</p>
             ) : (
               <div className="checkout-lines">

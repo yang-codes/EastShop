@@ -80,6 +80,7 @@ create table if not exists public.orders (
   source text not null check (source in ('telegram', 'instagram', 'web')),
   language text not null default 'en' check (language in ('zh', 'en', 'ru')),
   telegram_user jsonb,
+  telegram_user_id text,
   total numeric(12, 2) not null default 0 check (total >= 0),
   status text not null default 'new' check (status in ('new', 'contacted', 'fulfilled', 'cancelled')),
   created_at timestamp without time zone not null default timezone('Asia/Shanghai', now()),
@@ -128,6 +129,7 @@ create index if not exists products_active_sort_idx on public.products (is_activ
 create index if not exists products_category_idx on public.products (category_id);
 create index if not exists orders_status_created_idx on public.orders (status, created_at desc);
 create index if not exists orders_source_created_idx on public.orders (source, created_at desc);
+create index if not exists orders_telegram_user_id_idx on public.orders (telegram_user_id) where telegram_user_id is not null;
 create index if not exists order_items_order_id_idx on public.order_items (order_id);
 create index if not exists admin_profiles_user_id_idx on public.admin_profiles (user_id);
 ```
@@ -605,10 +607,16 @@ select id, name_zh, variants, is_featured, is_active, sort_order from public.pro
 ```env
 VITE_SUPABASE_URL=https://你的项目ref.supabase.co
 VITE_SUPABASE_ANON_KEY=你的 Supabase anon key
-VITE_GEOAPIFY_API_KEY=你的 Geoapify API key
 ```
 
 不要把 `.env.local` 提交到 GitHub。
+
+地址反查使用 Supabase Edge Function 代理 Geoapify，Geoapify key 不放在前端环境变量中。部署时执行：
+
+```powershell
+supabase secrets set GEOAPIFY_API_KEY=你的 Geoapify API key
+supabase functions deploy reverse-geocode --no-verify-jwt
+```
 
 ## 11. 商品图片 Storage bucket
 
@@ -709,11 +717,36 @@ order by policyname;
 ## 12. 后续还要补的后端内容
 
 - 部署并验证 `submit-order` Edge Function，并在 Supabase secrets 配置 `TELEGRAM_BOT_TOKEN`；可选配置 `TELEGRAM_INIT_DATA_MAX_AGE_SECONDS`，默认 86400 秒
+- 部署并验证 `reverse-geocode` Edge Function，并在 Supabase secrets 配置 `GEOAPIFY_API_KEY`
 - 部署并验证 `translate-text` Edge Function，并在 Supabase secrets 配置 `TENCENTCLOUD_SECRET_ID`、`TENCENTCLOUD_SECRET_KEY` 和 `TENCENT_TRANSLATE_REGION`
 - 执行并验证 `007_notification_settings.sql`
 - 执行并验证 `008_product_variants.sql`
 - 执行并验证 `009_store_settings.sql`，用于后台店铺配置和前台手机号前缀下拉选项
+- 执行并验证 `011_social_platform_settings.sql`，用于后台配置社媒平台来源下拉选项，并在订单中保存 `social_platform`
+- 执行并验证 `012_telegram_order_identity.sql`，用于保存和回填 `orders.telegram_user_id`，支持 Telegram Mini App “我的订单”按验签身份自动查询
+- 执行并验证 `013_order_duplicate_guard.sql`，用于保存 `orders.cart_fingerprint`，并用数据库触发器阻止同手机号、来源、金额、商品/规格/数量指纹在 5 分钟内重复下单
 - 使用 Telegram Mini App 真机或 Telegram WebApp 环境验证 `initData` 验签通过，普通 Web 伪造 `source=telegram` 时应返回 `INVALID_TELEGRAM_INIT_DATA`
+
+### 12.1 订单重复提交防护
+
+`submit-order` 已增加下单安全防护：隐藏 honeypot、IP 级限流、手机号级限流，以及 5 分钟重复订单检测。重复订单按手机号、来源、金额和商品/规格/数量指纹判断。
+
+为了避免 Edge Function 多实例、并发提交或前置查询漏判，还需要执行数据库迁移：
+
+```sql
+-- 在 Supabase SQL Editor 执行：
+-- supabase/migrations/013_order_duplicate_guard.sql
+```
+
+该迁移会新增 `orders.cart_fingerprint`，创建索引和 `prevent_recent_duplicate_order` 触发器，在数据库插入层阻止 5 分钟内重复订单。重复提交时，`submit-order` 应返回 `409 DUPLICATE_ORDER`。
+
+执行迁移后，还需要重新部署函数：
+
+```bash
+supabase functions deploy submit-order --no-verify-jwt
+```
+
+如果只更新前端，或只执行 SQL 但未部署新版 `submit-order`，重复订单保护可能不会完整生效。
 
 ## 13. 常见错误：invalid input syntax for type uuid
 

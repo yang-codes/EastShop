@@ -2,6 +2,13 @@
 
 ## 2026-06-02
 
+- `submit-order` 增加下单安全防护：隐藏 honeypot、IP 级限流、手机号级限流，以及 5 分钟重复订单检测。
+- 重复订单检测按手机号、来源、金额和商品/规格/数量指纹判断；Edge Function 会先查近期候选订单，订单写入时保存 `orders.cart_fingerprint`。
+- 新增 Supabase migration：`013_order_duplicate_guard.sql`，为订单表增加 `cart_fingerprint`，并创建 `prevent_recent_duplicate_order` 数据库触发器，在插入层阻止 5 分钟内重复订单；重复时返回 `409 DUPLICATE_ORDER`。
+- 线上生效需要同时执行数据库迁移并重新部署 `submit-order` Edge Function；只更新前端不会触发该保护。
+- 下单页定位链路调整为 Telegram Mini App 优先调用 `Telegram.WebApp.LocationManager`，失败后回退浏览器 Geolocation API；Web 和 Instagram 入口继续使用浏览器原生定位，经纬度统一交由 `reverse-geocode` 反查地址。
+- 来源识别增加 Instagram 自动识别和当前会话记忆：Instagram 内置浏览器或 `instagram.com` referrer 会自动标记为 Instagram，站内跳转不需要每个链接都手动带 `source=instagram`。
+- 下单页地址反查改为通过 `reverse-geocode` Supabase Edge Function 调用 Geoapify，前端不再读取 `VITE_GEOAPIFY_API_KEY`，Geoapify key 改存 Supabase secret `GEOAPIFY_API_KEY`。
 - 未配置 Supabase 的本地开发/mock 模式下，后台路由会使用本地预览管理员身份进入管理页，便于直接验证后台商品、订单、分类和店铺配置页面。
 - 下单页定位在非安全来源被浏览器拦截时，改为显示明确的 HTTPS/localhost 提示，避免直接暴露浏览器英文错误。
 - 分类管理和店铺配置接入翻译补齐：分类名称、手机号前缀名称可从中文补齐英文/俄文，保存时空白 EN/RU 会使用中文兜底。
@@ -11,6 +18,8 @@
 - Web 商品详情页左侧商品切换优化为先使用已加载商品数据即时刷新右侧详情，再同步更新 URL；重复点击当前商品不会重复触发跳转。
 - 新增后台“店铺配置”页面 `/admin/store-settings`，支持管理员维护提交订单和我的订单查询页使用的手机号国家/地区前缀下拉选项。
 - 新增 Supabase migration：`009_store_settings.sql`，创建公开可读、仅管理员可写的 `store_settings` 单例配置表，保存手机号前缀配置。
+- 店铺配置新增社媒平台来源配置，默认 Telegram、Instagram、Facebook 和其他；下单页将社交账号改为平台来源下拉 + 账号输入。
+- 新增 Supabase migration：`011_social_platform_settings.sql`，为 `store_settings` 增加 `social_platforms`，为 `orders` 增加 `social_platform`；订单后台、订单查询和飞书通知会展示平台来源。
 - 结算成功页移除页头重复的“继续浏览商品”入口，仅保留成功提示卡片内的主要入口。
 - 前台新增“我的订单”入口和 `/orders` 查询页，支持手机号 + 订单号或手机号 + 社交账号查询。
 - 新增 `lookup-orders` Supabase Edge Function，公开查询入口仍要求手机号参与校验，并返回订单状态、商品/规格、数量、金额、地址和下单时间；后台改 `orders.status` 后前台查询会实时读取最新状态。
@@ -34,6 +43,7 @@
 - 结算页必填规则调整为仅手机号必填，姓名和详细地址改为可选；飞书通知中空姓名和空地址不再显示对应行。
 - 飞书订单通知增加备注展示：用户填写备注时通知内容会追加“备注”行。
 - `submit-order` 增加 Telegram Mini App `initData` 服务端验签：使用 `TELEGRAM_BOT_TOKEN` 校验 `hash` 和 `auth_date`，并将验签后的 Telegram 用户快照写入订单。
+- Telegram Mini App 订单新增已验签用户 ID 持久化；“我的订单”页在 Telegram 环境自动通过 `initData` 查询本人订单，无需输入手机号、订单号或社交账号。
 - 手机端商品详情页修正顶部操作区和内容卡片对齐：导航按钮在窄屏下保持同一行，头图、购买卡片和详情图片区统一左右边距，规格按钮在手机端撑满可用宽度。
 - 前台顶部导航新增主页图标入口；“我的订单”页移除页内“继续选购”按钮，减少移动端重复入口和表单上方占位。
 - 商城首页移动端筛选栏调整为组合搜索控件：分类下拉嵌入搜索框左侧，“推荐”开关嵌入搜索框右侧，统一控件高度和焦点样式。
@@ -80,7 +90,7 @@
 - 下单成功后清空购物车，并展示订单号。
 - 未配置 Supabase 时，下单返回本地预览订单号，便于 mock 模式跑通前台闭环。
 - 配置 Supabase 后，`orderService.submitOrder` 调用 `submit-order` Edge Function。
-- 来源识别支持普通 query 和 HashRouter hash query 中的 `source=telegram|instagram|web`。
+- 来源识别支持普通 query 和 HashRouter hash query 中的 `source=telegram|instagram|web`，并支持 Instagram 内置浏览器/referrer 自动识别和当前会话记忆。
 
 ### 后台管理
 - 商品管理页增加 KPI、搜索、分类筛选、商品列表和商品编辑表单骨架。
@@ -135,7 +145,7 @@
 - `submit-order` 增强数据库错误诊断，商品查询、订单写入和订单明细写入失败时返回明确错误码和 Supabase 详情，前台保留非 JSON 响应文本用于排查。
 - 结算页提交订单时只发送当前商品列表可匹配到的购物车项，并自动清理本地购物车中的失效商品 ID，避免旧缓存商品导致 `PRODUCT_NOT_FOUND`。
 - 结算页订单摘要合计改为每次渲染直接汇总当前明细小计，并增加 `data-total` 便于排查缓存或 DOM 显示问题。
-- 下单页定位接入 Geoapify Reverse Geocoding；配置 `VITE_GEOAPIFY_API_KEY` 后可把浏览器经纬度转换为国家、城市、街道和格式化地址，并回填详细地址。
+- 下单页定位接入 Geoapify Reverse Geocoding；当前已迁移为通过 `reverse-geocode` Edge Function 读取服务端 `GEOAPIFY_API_KEY`，把浏览器经纬度转换为国家、城市、街道和格式化地址，并回填详细地址。
 - 后台订单管理页优化订单卡片排版，增加清晰的订单头、状态徽标、元信息区、商品明细区和地址备注区；状态下拉保存时禁用当前订单并写入 `orders.status`。
 - 后台订单管理新增开始日期和结束日期筛选，保留筛选栏单一蓝色“导出订单”入口，按当前搜索、状态和日期范围导出 XLSX，并在文件名中附加日期范围。
 - 后台订单管理筛选栏缩短搜索框显示宽度，并统一状态下拉框与日期筛选框的标签和控件对齐。

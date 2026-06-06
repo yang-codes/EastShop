@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AdminLayout } from './layouts/AdminLayout'
 import { StoreLayout } from './layouts/StoreLayout'
@@ -8,12 +8,15 @@ import { MyOrdersPage } from '../pages/store/MyOrdersPage'
 import { ProductDetailPage } from '../pages/store/ProductDetailPage'
 import { StoreHomePage } from '../pages/store/StoreHomePage'
 import { AdminCategoriesPage } from '../pages/admin/AdminCategoriesPage'
-import { AdminApiDocsPage } from '../pages/admin/AdminApiDocsPage'
 import { AdminLoginPage } from '../pages/admin/AdminLoginPage'
 import { AdminNotificationsPage } from '../pages/admin/AdminNotificationsPage'
 import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage'
 import { AdminProductsPage } from '../pages/admin/AdminProductsPage'
 import { AdminStoreSettingsPage } from '../pages/admin/AdminStoreSettingsPage'
+
+const AdminApiDocsPage = lazy(() =>
+  import('../pages/admin/AdminApiDocsPage').then((module) => ({ default: module.AdminApiDocsPage })),
+)
 
 function DocumentTitle() {
   const location = useLocation()
@@ -45,7 +48,14 @@ export function AppRouter() {
           <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="store-settings" element={<AdminStoreSettingsPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
-          <Route path="api-docs" element={<AdminApiDocsPage />} />
+          <Route
+            path="api-docs"
+            element={
+              <Suspense fallback={<div className="form-card"><p>Loading...</p></div>}>
+                <AdminApiDocsPage />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </HashRouter>

@@ -1,4 +1,3 @@
-import ExcelJS from 'exceljs'
 import type { EntrySource, Order, OrderStatus } from '../types/order'
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
 import type { SupportedLanguage } from '../types/language'
@@ -31,7 +30,9 @@ type OrderRow = {
   customer_name: string
   /** 客户完整国际手机号。 */
   phone: string
-  /** 客户社交账号，便于 Instagram/Telegram 人工联系。 */
+  /** 客户社交平台，便于区分 Telegram/Instagram/Facebook 等来源账号。 */
+  social_platform: string | null
+  /** 客户社交账号，便于人工联系。 */
   social_handle: string | null
   /** 客户确认后的详细收货地址。 */
   address: string
@@ -69,6 +70,7 @@ const mockOrders: Order[] = [
       note: 'Need delivery quote before confirmation.',
       phone: '+7 701 000 1020',
       socialHandle: '@aruzhan_shop',
+      socialPlatform: 'instagram',
     },
     createdAt: '2026-05-29T10:30:00.000Z',
     id: 'ORD-20260529-001',
@@ -100,6 +102,7 @@ const mockOrders: Order[] = [
       name: 'Timur',
       phone: '+996 555 234 678',
       socialHandle: '@timur_tools',
+      socialPlatform: 'telegram',
     },
     createdAt: '2026-05-28T15:45:00.000Z',
     id: 'ORD-20260528-002',
@@ -165,6 +168,7 @@ function mapOrder(row: OrderRow): Order {
       note: row.note ?? undefined,
       phone: row.phone,
       socialHandle: row.social_handle ?? undefined,
+      socialPlatform: row.social_platform ?? undefined,
     },
     createdAt: row.created_at,
     id: row.id,
@@ -277,6 +281,7 @@ export const adminOrderService = {
       return `\uFEFF${[headers.join(','), ...body].join('\n')}`
     }
 
+    const { default: ExcelJS } = await import('exceljs')
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Orders')
     worksheet.columns = Object.keys(rows[0] ?? { orderId: '' }).map((key) => ({

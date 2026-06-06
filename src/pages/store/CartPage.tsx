@@ -23,11 +23,40 @@ export function CartPage() {
   const { i18n, t } = useTranslation()
   const [cart, setCart] = useState<CartLine[]>(() => cartService.getCart())
   const [products, setProducts] = useState<Product[]>([])
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
   const language = resolveLanguage(i18n.language)
 
   useEffect(() => {
-    void catalogService.listActiveProducts().then(setProducts)
-  }, [])
+    let isMounted = true
+
+    async function loadProducts() {
+      setIsLoadingProducts(true)
+      setErrorMessage('')
+
+      try {
+        const nextProducts = await catalogService.listActiveProducts()
+
+        if (isMounted) {
+          setProducts(nextProducts)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setErrorMessage(error instanceof Error ? error.message : t('myOrders.failed'))
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingProducts(false)
+        }
+      }
+    }
+
+    void loadProducts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [t])
 
   const cartItems = useMemo(
     () =>
@@ -75,14 +104,17 @@ export function CartPage() {
   return (
     <section className="page-stack">
       <PageHeader title={t('cart.title')} />
-      {cartItems.length === 0 ? (
+      {isLoadingProducts ? <div className="form-card"><p>{t('common.loading')}</p></div> : null}
+      {errorMessage ? <div className="form-card error-panel"><p>{errorMessage}</p></div> : null}
+      {!isLoadingProducts && !errorMessage && cartItems.length === 0 ? (
         <div className="form-card">
           <p>{t('cart.empty')}</p>
           <Link className="primary-button cart-empty-action" to="/">
             {t('cart.continueShopping')}
           </Link>
         </div>
-      ) : (
+      ) : null}
+      {!isLoadingProducts && !errorMessage && cartItems.length > 0 ? (
         <div className="cart-panel">
           <div className="cart-list">
             {cartItems.map(({ line, product, subtotal, unitPrice, variant }) => (
@@ -139,7 +171,7 @@ export function CartPage() {
             </Link>
           </aside>
         </div>
-      )}
+      ) : null}
     </section>
   )
 }

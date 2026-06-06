@@ -19,6 +19,28 @@ declare global {
             language_code?: string
           }
         }
+        LocationManager?: {
+          getLocation?: (
+            callback: (
+              location: {
+                accuracy?: number
+                altitude?: number
+                altitude_accuracy?: number
+                course?: number
+                horizontal_accuracy?: number
+                latitude: number
+                longitude: number
+                speed?: number
+              } | null,
+            ) => void,
+          ) => void
+          init?: (callback?: () => void) => void
+          isAccessGranted?: boolean
+          isAccessRequested?: boolean
+          isInited?: boolean
+          isLocationAvailable?: boolean
+          openSettings?: () => void
+        }
         ready?: () => void
       }
     }
