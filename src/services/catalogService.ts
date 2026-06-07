@@ -1,4 +1,5 @@
 ﻿import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
+import { createLocalizedText } from '../types/language'
 import type { Category, Product, ProductSpec, ProductVariant } from '../types/product'
 
 type SupabaseCategoryRow = {
@@ -6,6 +7,7 @@ type SupabaseCategoryRow = {
   name_zh: string
   name_en: string
   name_ru: string
+  name_uz?: string | null
   sort_order: number
   is_active: boolean
 }
@@ -16,12 +18,15 @@ type SupabaseProductRow = {
   name_zh: string
   name_en: string
   name_ru: string
+  name_uz?: string | null
   description_zh: string
   description_en: string
   description_ru: string
+  description_uz?: string | null
   detail_zh: string
   detail_en: string
   detail_ru: string
+  detail_uz?: string | null
   cover_image: string | null
   cover_images?: unknown
   images: unknown
@@ -74,14 +79,20 @@ function asProductSpecs(value: unknown): ProductSpec[] {
     return []
   }
 
-  return value.filter((item): item is ProductSpec => {
-    if (!item || typeof item !== 'object') {
-      return false
-    }
+  return value
+    .filter((item): item is ProductSpec => {
+      if (!item || typeof item !== 'object') {
+        return false
+      }
 
-    const candidate = item as ProductSpec
-    return Boolean(candidate.id && candidate.label && candidate.value)
-  })
+      const candidate = item as ProductSpec
+      return Boolean(candidate.id && candidate.label && candidate.value)
+    })
+    .map((spec) => ({
+      ...spec,
+      label: createLocalizedText(spec.label),
+      value: createLocalizedText(spec.value),
+    }))
 }
 
 function asProductVariants(value: unknown): ProductVariant[] {
@@ -102,7 +113,7 @@ function asProductVariants(value: unknown): ProductVariant[] {
       id: variant.id,
       isActive: variant.isActive ?? true,
       isDefault: variant.isDefault ?? index === 0,
-      name: variant.name,
+      name: createLocalizedText(variant.name),
       price: Number(variant.price),
       sku: variant.sku,
       sortOrder: Number(variant.sortOrder) || index + 1,
@@ -114,11 +125,12 @@ function mapCategory(row: SupabaseCategoryRow): Category {
   return {
     id: row.id,
     isActive: row.is_active,
-    name: {
+    name: createLocalizedText({
       en: row.name_en,
       ru: row.name_ru,
+      uz: row.name_uz ?? row.name_zh,
       zh: row.name_zh,
-    },
+    }),
     sortOrder: row.sort_order,
   }
 }
@@ -130,25 +142,28 @@ function mapProduct(row: SupabaseProductRow): Product {
     categoryId: row.category_id ?? '',
     coverImage: row.cover_image ?? coverImages[0],
     coverImages,
-    description: {
+    description: createLocalizedText({
       en: row.description_en,
       ru: row.description_ru,
+      uz: row.description_uz ?? row.description_zh,
       zh: row.description_zh,
-    },
-    detail: {
+    }),
+    detail: createLocalizedText({
       en: row.detail_en,
       ru: row.detail_ru,
+      uz: row.detail_uz ?? row.detail_zh,
       zh: row.detail_zh,
-    },
+    }),
     id: row.id,
     images: asStringArray(row.images),
     isActive: row.is_active,
     isFeatured: row.is_featured,
-    name: {
+    name: createLocalizedText({
       en: row.name_en,
       ru: row.name_ru,
+      uz: row.name_uz ?? row.name_zh,
       zh: row.name_zh,
-    },
+    }),
     sortOrder: row.sort_order,
     specs: asProductSpecs(row.specs),
     tags: asStringArray(row.tags),

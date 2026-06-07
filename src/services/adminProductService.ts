@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../lib/supabaseClient'
+import { createLocalizedText } from '../types/language'
 import type { Category, Product, ProductSpec, ProductVariant } from '../types/product'
 
 const productImagesBucket = 'product-images'
@@ -14,18 +15,24 @@ type ProductRow = {
   name_en: string
   /** 俄文商品名称，用于俄文前台、订单快照和中亚客户沟通。 */
   name_ru: string
+  /** 乌兹语商品名称，用于乌兹语前台。 */
+  name_uz?: string | null
   /** 中文短简介，用于商品列表卡片。 */
   description_zh: string
   /** 英文短简介，用于商品列表卡片。 */
   description_en: string
   /** 俄文短简介，用于商品列表卡片。 */
   description_ru: string
+  /** 乌兹语短简介，用于商品列表卡片。 */
+  description_uz?: string | null
   /** 中文详情，用于商品详情页。 */
   detail_zh: string
   /** 英文详情，用于商品详情页。 */
   detail_en: string
   /** 俄文详情，用于商品详情页。 */
   detail_ru: string
+  /** 乌兹语详情，用于商品详情页。 */
+  detail_uz?: string | null
   /** 商品主图 URL，用于列表卡片和详情页首图。 */
   cover_image: string | null
   /** 商品主图 URL 列表，用于详情页顶部横向滚动主图画廊。 */
@@ -55,6 +62,8 @@ type CategoryRow = {
   name_en: string
   /** 俄文分类名称。 */
   name_ru: string
+  /** 乌兹语分类名称。 */
+  name_uz?: string | null
   /** 分类展示排序值，数字越小越靠前。 */
   sort_order: number
   /** 是否启用；停用分类不在前台筛选中展示。 */
@@ -94,14 +103,20 @@ function asProductSpecs(value: unknown): ProductSpec[] {
     return []
   }
 
-  return value.filter((item): item is ProductSpec => {
-    if (!item || typeof item !== 'object') {
-      return false
-    }
+  return value
+    .filter((item): item is ProductSpec => {
+      if (!item || typeof item !== 'object') {
+        return false
+      }
 
-    const candidate = item as ProductSpec
-    return Boolean(candidate.id && candidate.label && candidate.value)
-  })
+      const candidate = item as ProductSpec
+      return Boolean(candidate.id && candidate.label && candidate.value)
+    })
+    .map((spec) => ({
+      ...spec,
+      label: createLocalizedText(spec.label),
+      value: createLocalizedText(spec.value),
+    }))
 }
 
 function asProductVariants(value: unknown): ProductVariant[] {
@@ -122,7 +137,7 @@ function asProductVariants(value: unknown): ProductVariant[] {
       id: variant.id,
       isActive: variant.isActive ?? true,
       isDefault: variant.isDefault ?? index === 0,
-      name: variant.name,
+      name: createLocalizedText(variant.name),
       price: Number(variant.price),
       sku: variant.sku,
       sortOrder: Number(variant.sortOrder) || index + 1,
@@ -144,25 +159,28 @@ function mapProduct(row: ProductRow): Product {
     categoryId: row.category_id ?? '',
     coverImage: row.cover_image ?? coverImages[0],
     coverImages,
-    description: {
+    description: createLocalizedText({
       en: row.description_en,
       ru: row.description_ru,
+      uz: row.description_uz ?? row.description_zh,
       zh: row.description_zh,
-    },
-    detail: {
+    }),
+    detail: createLocalizedText({
       en: row.detail_en,
       ru: row.detail_ru,
+      uz: row.detail_uz ?? row.detail_zh,
       zh: row.detail_zh,
-    },
+    }),
     id: row.id,
     images: asStringArray(row.images),
     isActive: row.is_active,
     isFeatured: row.is_featured,
-    name: {
+    name: createLocalizedText({
       en: row.name_en,
       ru: row.name_ru,
+      uz: row.name_uz ?? row.name_zh,
       zh: row.name_zh,
-    },
+    }),
     sortOrder: row.sort_order,
     specs: asProductSpecs(row.specs),
     tags: asStringArray(row.tags),
@@ -181,11 +199,12 @@ function mapCategory(row: CategoryRow): Category {
   return {
     id: row.id,
     isActive: row.is_active,
-    name: {
+    name: createLocalizedText({
       en: row.name_en,
       ru: row.name_ru,
+      uz: row.name_uz ?? row.name_zh,
       zh: row.name_zh,
-    },
+    }),
     sortOrder: row.sort_order,
   }
 }
@@ -204,9 +223,11 @@ function toProductPayload(product: Product) {
     cover_images: product.coverImages,
     description_en: product.description.en,
     description_ru: product.description.ru,
+    description_uz: product.description.uz,
     description_zh: product.description.zh,
     detail_en: product.detail.en,
     detail_ru: product.detail.ru,
+    detail_uz: product.detail.uz,
     detail_zh: product.detail.zh,
     id: product.id,
     images: product.images,
@@ -214,6 +235,7 @@ function toProductPayload(product: Product) {
     is_featured: product.isFeatured,
     name_en: product.name.en,
     name_ru: product.name.ru,
+    name_uz: product.name.uz,
     name_zh: product.name.zh,
     sort_order: product.sortOrder,
     specs: product.specs,
@@ -276,6 +298,7 @@ function toCategoryPayload(category: Category) {
     is_active: category.isActive,
     name_en: category.name.en,
     name_ru: category.name.ru,
+    name_uz: category.name.uz,
     name_zh: category.name.zh,
     sort_order: category.sortOrder,
   }

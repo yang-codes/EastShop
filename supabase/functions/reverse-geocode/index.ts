@@ -7,7 +7,7 @@ const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_REQUESTS = 30
 
-type SupportedLanguage = 'zh' | 'en' | 'ru'
+type SupportedLanguage = 'zh' | 'en' | 'ru' | 'uz'
 
 type ReverseGeocodeInput = {
   accuracy?: number
@@ -119,7 +119,7 @@ function getFallbackSnapshot(input: Required<Pick<ReverseGeocodeInput, 'latitude
 }
 
 function normalizeLanguage(language: ReverseGeocodeInput['language']) {
-  return language === 'en' || language === 'ru' || language === 'zh' ? language : 'zh'
+  return language === 'en' || language === 'ru' || language === 'zh' || language === 'uz' ? language : 'zh'
 }
 
 Deno.serve(async (request) => {

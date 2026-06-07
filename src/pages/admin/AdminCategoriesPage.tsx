@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import { adminProductService } from '../../services/adminProductService'
 import { catalogService } from '../../services/catalogService'
 import { translationService } from '../../services/translationService'
+import { resolveSupportedLanguage } from '../../types/language'
 import type { Category, Product } from '../../types/product'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
 
@@ -14,20 +15,13 @@ type CategoryDraft = {
   isActive: boolean
   nameEn: string
   nameRu: string
+  nameUz: string
   nameZh: string
   sortOrder: string
 }
 
 function resolveLanguage(language: string) {
-  if (language.startsWith('zh')) {
-    return 'zh'
-  }
-
-  if (language.startsWith('ru')) {
-    return 'ru'
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 function createCategoryId(seed: string) {
@@ -41,6 +35,7 @@ function createEmptyDraft(sortOrder: number): CategoryDraft {
     isActive: true,
     nameEn: '',
     nameRu: '',
+    nameUz: '',
     nameZh: '',
     sortOrder: String(sortOrder),
   }
@@ -52,6 +47,7 @@ function categoryToDraft(category: Category): CategoryDraft {
     isActive: category.isActive,
     nameEn: category.name.en,
     nameRu: category.name.ru,
+    nameUz: category.name.uz,
     nameZh: category.name.zh,
     sortOrder: String(category.sortOrder),
   }
@@ -61,6 +57,7 @@ function draftToCategory(draft: CategoryDraft): Category {
   const nameZh = draft.nameZh.trim()
   const nameEn = draft.nameEn.trim() || nameZh
   const nameRu = draft.nameRu.trim() || nameZh
+  const nameUz = draft.nameUz.trim() || nameZh
 
   return {
     id: draft.id || createCategoryId(nameEn || nameZh || nameRu),
@@ -68,6 +65,7 @@ function draftToCategory(draft: CategoryDraft): Category {
     name: {
       en: nameEn,
       ru: nameRu,
+      uz: nameUz,
       zh: nameZh,
     },
     sortOrder: Number(draft.sortOrder) || 0,
@@ -163,6 +161,7 @@ export function AdminCategoriesPage() {
         ...current,
         nameEn: current.nameEn.trim() ? current.nameEn : translated.en,
         nameRu: current.nameRu.trim() ? current.nameRu : translated.ru,
+        nameUz: current.nameUz.trim() ? current.nameUz : translated.uz,
       }))
       setStatusMessage(t('admin.categoryAutoFillDone'))
     } catch (error) {
@@ -336,6 +335,10 @@ export function AdminCategoriesPage() {
             <label>
               {t('admin.nameRu')}
               <input onChange={(event) => updateDraft('nameRu', event.target.value)} value={draft.nameRu} />
+            </label>
+            <label>
+              {t('admin.nameUz')}
+              <input onChange={(event) => updateDraft('nameUz', event.target.value)} value={draft.nameUz} />
             </label>
           </div>
           <div className="form-grid two-columns">

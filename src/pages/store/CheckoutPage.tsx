@@ -16,20 +16,12 @@ import {
   type PhonePrefixOption,
   type SocialPlatformOption,
 } from '../../services/storeSettingsService'
-import type { SupportedLanguage } from '../../types/language'
+import { resolveSupportedLanguage, type SupportedLanguage } from '../../types/language'
 import type { LocationSnapshot } from '../../types/order'
 import type { Product } from '../../types/product'
 
 function resolveLanguage(language: string): SupportedLanguage {
-  if (language.startsWith('zh')) {
-    return 'zh'
-  }
-
-  if (language.startsWith('ru')) {
-    return 'ru'
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 function getLocationErrorMessage(error: unknown, fallback: string, secureOriginMessage: string) {

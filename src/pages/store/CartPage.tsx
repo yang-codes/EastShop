@@ -5,18 +5,11 @@ import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
+import { resolveSupportedLanguage } from '../../types/language'
 import type { Product } from '../../types/product'
 
 function resolveLanguage(language: string) {
-  if (language.startsWith('zh')) {
-    return 'zh'
-  }
-
-  if (language.startsWith('ru')) {
-    return 'ru'
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 export function CartPage() {

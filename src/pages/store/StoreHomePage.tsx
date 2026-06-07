@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { catalogService } from '../../services/catalogService'
+import { resolveSupportedLanguage } from '../../types/language'
 import type { Category, Product } from '../../types/product'
 
 function getDisplayPrice(product: Product) {
@@ -55,7 +56,7 @@ export function StoreHomePage() {
     }
   }, [])
 
-  const language = i18n.language.startsWith('zh') ? 'zh' : i18n.language.startsWith('ru') ? 'ru' : 'en'
+  const language = resolveSupportedLanguage(i18n.language)
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
@@ -66,9 +67,11 @@ export function StoreHomePage() {
         product.name.zh,
         product.name.en,
         product.name.ru,
+        product.name.uz,
         product.description.zh,
         product.description.en,
         product.description.ru,
+        product.description.uz,
         product.tags.join(' '),
       ]
         .join(' ')

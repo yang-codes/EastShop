@@ -1,9 +1,9 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { resources } from './resources'
-import type { SupportedLanguage } from '../types/language'
+import { resolveSupportedLanguage, type SupportedLanguage } from '../types/language'
 
-const supportedLanguages: SupportedLanguage[] = ['zh', 'en', 'ru']
+const supportedLanguages: SupportedLanguage[] = ['zh', 'en', 'ru', 'uz']
 const languageStorageKey = 'eastshop.language'
 
 function getStoredLanguage() {
@@ -35,16 +35,8 @@ function resolveInitialLanguage(): SupportedLanguage {
       continue
     }
 
-    if (normalized.startsWith('zh')) {
-      return 'zh'
-    }
-
-    if (normalized.startsWith('ru')) {
-      return 'ru'
-    }
-
-    if (normalized.startsWith('en')) {
-      return 'en'
+    if (normalized.startsWith('zh') || normalized.startsWith('ru') || normalized.startsWith('uz') || normalized.startsWith('en')) {
+      return resolveSupportedLanguage(normalized)
     }
   }
 

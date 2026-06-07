@@ -6,6 +6,7 @@ const languages: Array<{ code: SupportedLanguage; label: string }> = [
   { code: 'zh', label: '中文' },
   { code: 'en', label: 'EN' },
   { code: 'ru', label: 'RU' },
+  { code: 'uz', label: 'UZ' },
 ]
 
 type LanguageSwitcherProps = {

@@ -1,5 +1,5 @@
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
-import type { LocalizedText } from '../types/language'
+import { createLocalizedText, type LocalizedText } from '../types/language'
 
 export type PhonePrefixOption = {
   id: string
@@ -30,21 +30,21 @@ type StoreSettingsRow = {
 }
 
 export const defaultPhonePrefixes: PhonePrefixOption[] = [
-  { id: 'cn', label: { zh: '中国', en: 'China', ru: 'Китай' }, prefix: '+86', isActive: true, sortOrder: 1 },
-  { id: 'kz', label: { zh: '哈萨克斯坦', en: 'Kazakhstan', ru: 'Казахстан' }, prefix: '+7', isActive: true, sortOrder: 2 },
-  { id: 'ru', label: { zh: '俄罗斯', en: 'Russia', ru: 'Россия' }, prefix: '+7', isActive: true, sortOrder: 3 },
-  { id: 'uz', label: { zh: '乌兹别克斯坦', en: 'Uzbekistan', ru: 'Узбекистан' }, prefix: '+998', isActive: true, sortOrder: 4 },
-  { id: 'kg', label: { zh: '吉尔吉斯斯坦', en: 'Kyrgyzstan', ru: 'Кыргызстан' }, prefix: '+996', isActive: true, sortOrder: 5 },
-  { id: 'tj', label: { zh: '塔吉克斯坦', en: 'Tajikistan', ru: 'Tajikistan' }, prefix: '+992', isActive: true, sortOrder: 6 },
-  { id: 'tm', label: { zh: '土库曼斯坦', en: 'Turkmenistan', ru: 'Туркменистан' }, prefix: '+993', isActive: true, sortOrder: 7 },
-  { id: 'other', label: { zh: '其他', en: 'Other', ru: 'Другое' }, prefix: '+', isActive: true, isCustom: true, sortOrder: 99 },
+  { id: 'cn', label: createLocalizedText({ zh: '中国', en: 'China', ru: 'Китай', uz: 'Xitoy' }), prefix: '+86', isActive: true, sortOrder: 1 },
+  { id: 'kz', label: createLocalizedText({ zh: '哈萨克斯坦', en: 'Kazakhstan', ru: 'Казахстан', uz: 'Qozogʻiston' }), prefix: '+7', isActive: true, sortOrder: 2 },
+  { id: 'ru', label: createLocalizedText({ zh: '俄罗斯', en: 'Russia', ru: 'Россия', uz: 'Rossiya' }), prefix: '+7', isActive: true, sortOrder: 3 },
+  { id: 'uz', label: createLocalizedText({ zh: '乌兹别克斯坦', en: 'Uzbekistan', ru: 'Узбекистан', uz: 'Oʻzbekiston' }), prefix: '+998', isActive: true, sortOrder: 4 },
+  { id: 'kg', label: createLocalizedText({ zh: '吉尔吉斯斯坦', en: 'Kyrgyzstan', ru: 'Кыргызстан', uz: 'Qirgʻiziston' }), prefix: '+996', isActive: true, sortOrder: 5 },
+  { id: 'tj', label: createLocalizedText({ zh: '塔吉克斯坦', en: 'Tajikistan', ru: 'Tajikistan', uz: 'Tojikiston' }), prefix: '+992', isActive: true, sortOrder: 6 },
+  { id: 'tm', label: createLocalizedText({ zh: '土库曼斯坦', en: 'Turkmenistan', ru: 'Туркменистан', uz: 'Turkmaniston' }), prefix: '+993', isActive: true, sortOrder: 7 },
+  { id: 'other', label: createLocalizedText({ zh: '其他', en: 'Other', ru: 'Другое', uz: 'Boshqa' }), prefix: '+', isActive: true, isCustom: true, sortOrder: 99 },
 ]
 
 export const defaultSocialPlatforms: SocialPlatformOption[] = [
-  { id: 'telegram', label: { zh: 'Telegram', en: 'Telegram', ru: 'Telegram' }, code: 'telegram', isActive: true, sortOrder: 1 },
-  { id: 'instagram', label: { zh: 'Instagram', en: 'Instagram', ru: 'Instagram' }, code: 'instagram', isActive: true, sortOrder: 2 },
-  { id: 'facebook', label: { zh: 'Facebook', en: 'Facebook', ru: 'Facebook' }, code: 'facebook', isActive: true, sortOrder: 3 },
-  { id: 'other', label: { zh: '其他', en: 'Other', ru: 'Другое' }, code: 'other', isActive: true, sortOrder: 99 },
+  { id: 'telegram', label: createLocalizedText({ zh: 'Telegram', en: 'Telegram', ru: 'Telegram', uz: 'Telegram' }), code: 'telegram', isActive: true, sortOrder: 1 },
+  { id: 'instagram', label: createLocalizedText({ zh: 'Instagram', en: 'Instagram', ru: 'Instagram', uz: 'Instagram' }), code: 'instagram', isActive: true, sortOrder: 2 },
+  { id: 'facebook', label: createLocalizedText({ zh: 'Facebook', en: 'Facebook', ru: 'Facebook', uz: 'Facebook' }), code: 'facebook', isActive: true, sortOrder: 3 },
+  { id: 'other', label: createLocalizedText({ zh: '其他', en: 'Other', ru: 'Другое', uz: 'Boshqa' }), code: 'other', isActive: true, sortOrder: 99 },
 ]
 
 const defaultSettings: StoreSettings = {
@@ -78,6 +78,7 @@ export function normalizePhonePrefixes(value: unknown): PhonePrefixOption[] {
     const zh = String(label?.zh ?? '').trim()
     const en = String(label?.en ?? zh).trim()
     const ru = String(label?.ru ?? zh).trim()
+    const uz = String(label?.uz ?? zh).trim()
 
     if (!id || !zh) {
       return
@@ -85,7 +86,7 @@ export function normalizePhonePrefixes(value: unknown): PhonePrefixOption[] {
 
     prefixes.push({
       id,
-      label: { zh, en: en || zh, ru: ru || zh },
+      label: createLocalizedText({ zh, en: en || zh, ru: ru || zh, uz: uz || zh }),
       prefix: normalizePrefix(String(record.prefix ?? '+')),
       isActive: record.isActive ?? true,
       isCustom: Boolean(record.isCustom),
@@ -121,6 +122,7 @@ export function normalizeSocialPlatforms(value: unknown): SocialPlatformOption[]
     const zh = String(label?.zh ?? '').trim()
     const en = String(label?.en ?? zh).trim()
     const ru = String(label?.ru ?? zh).trim()
+    const uz = String(label?.uz ?? zh).trim()
 
     if (!id || !code || !zh) {
       return
@@ -128,7 +130,7 @@ export function normalizeSocialPlatforms(value: unknown): SocialPlatformOption[]
 
     platforms.push({
       id,
-      label: { zh, en: en || zh, ru: ru || zh },
+      label: createLocalizedText({ zh, en: en || zh, ru: ru || zh, uz: uz || zh }),
       code,
       isActive: record.isActive ?? true,
       sortOrder: Number(record.sortOrder ?? index + 1),

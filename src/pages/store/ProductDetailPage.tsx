@@ -6,18 +6,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { cartService } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
+import { resolveSupportedLanguage } from '../../types/language'
 import type { Product } from '../../types/product'
 
 function resolveLanguage(language: string) {
-  if (language.startsWith('zh')) {
-    return 'zh'
-  }
-
-  if (language.startsWith('ru')) {
-    return 'ru'
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 function getDisplayPrice(product: Product) {
@@ -41,6 +34,7 @@ function findProductByLegacyKey(products: Product[], productId: string) {
       item.name.zh,
       item.name.en,
       item.name.ru,
+      item.name.uz,
       item.name.en.replace(/\s+/g, '-'),
       item.name.zh.replace(/\s+/g, '-'),
     ]

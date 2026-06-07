@@ -13,12 +13,13 @@ import {
   type SocialPlatformOption,
 } from '../../services/storeSettingsService'
 import { translationService } from '../../services/translationService'
+import type { SupportedLanguage } from '../../types/language'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
 
 function createPrefixDraft(sortOrder: number): PhonePrefixOption {
   return {
     id: `custom-${Date.now()}`,
-    label: { zh: '', en: '', ru: '' },
+    label: { zh: '', en: '', ru: '', uz: '' },
     prefix: '+',
     isActive: true,
     sortOrder,
@@ -41,7 +42,7 @@ function createSocialPlatformDraft(sortOrder: number): SocialPlatformOption {
     code: `platform-${timestamp}`,
     id: `platform-${timestamp}`,
     isActive: true,
-    label: { zh: '', en: '', ru: '' },
+    label: { zh: '', en: '', ru: '', uz: '' },
     sortOrder,
   }
 }
@@ -134,7 +135,7 @@ export function AdminStoreSettingsPage() {
     setPhonePrefixes((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)))
   }
 
-  function updatePrefixLabel(index: number, language: 'zh' | 'en' | 'ru', value: string) {
+  function updatePrefixLabel(index: number, language: SupportedLanguage, value: string) {
     setPhonePrefixes((current) =>
       current.map((item, itemIndex) =>
         itemIndex === index
@@ -170,7 +171,7 @@ export function AdminStoreSettingsPage() {
       return
     }
 
-    if (item.label.en.trim() && item.label.ru.trim()) {
+    if (item.label.en.trim() && item.label.ru.trim() && item.label.uz.trim()) {
       setStatusMessage(t('admin.storeSettingsAutoFillNothing'))
       setErrorMessage('')
       return
@@ -192,6 +193,7 @@ export function AdminStoreSettingsPage() {
                   ...currentItem.label,
                   en: currentItem.label.en.trim() ? currentItem.label.en : translated.en,
                   ru: currentItem.label.ru.trim() ? currentItem.label.ru : translated.ru,
+                  uz: currentItem.label.uz.trim() ? currentItem.label.uz : translated.uz,
                 },
               }
             : currentItem,
@@ -209,7 +211,7 @@ export function AdminStoreSettingsPage() {
     setSocialPlatforms((items) => items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)))
   }
 
-  function updatePlatformLabel(index: number, language: 'zh' | 'en' | 'ru', value: string) {
+  function updatePlatformLabel(index: number, language: SupportedLanguage, value: string) {
     setSocialPlatforms((items) => items.map((item, itemIndex) => (
       itemIndex === index
         ? { ...item, label: { ...item.label, [language]: value } }
@@ -239,7 +241,7 @@ export function AdminStoreSettingsPage() {
       return
     }
 
-    if (item.label.en.trim() && item.label.ru.trim()) {
+    if (item.label.en.trim() && item.label.ru.trim() && item.label.uz.trim()) {
       setStatusMessage(t('admin.storeSettingsAutoFillNothing'))
       setErrorMessage('')
       return
@@ -262,6 +264,7 @@ export function AdminStoreSettingsPage() {
             ...current.label,
             en: current.label.en.trim() ? current.label.en : result.en,
             ru: current.label.ru.trim() ? current.label.ru : result.ru,
+            uz: current.label.uz.trim() ? current.label.uz : result.uz,
           },
         }
       }))
@@ -348,7 +351,7 @@ export function AdminStoreSettingsPage() {
                     {t('admin.phonePrefixItem')} {index + 1}
                   </strong>
                   <p>
-                    {item.label.zh || item.label.en || item.label.ru || t('admin.unnamedPrefix')} · {item.prefix || '+'}
+                    {item.label.zh || item.label.en || item.label.ru || item.label.uz || t('admin.unnamedPrefix')} · {item.prefix || '+'}
                   </p>
                 </div>
                 <div className="phone-prefix-admin-actions">
@@ -383,6 +386,10 @@ export function AdminStoreSettingsPage() {
                 <label>
                   {t('admin.nameRu')}
                   <input onChange={(event) => updatePrefixLabel(index, 'ru', event.target.value)} value={item.label.ru} />
+                </label>
+                <label>
+                  {t('admin.nameUz')}
+                  <input onChange={(event) => updatePrefixLabel(index, 'uz', event.target.value)} value={item.label.uz} />
                 </label>
               </div>
 
@@ -442,7 +449,7 @@ export function AdminStoreSettingsPage() {
                     {t('admin.socialPlatformItem')} {index + 1}
                   </strong>
                   <p>
-                    {item.label.zh || item.label.en || item.label.ru || t('admin.unnamedSocialPlatform')}
+                    {item.label.zh || item.label.en || item.label.ru || item.label.uz || t('admin.unnamedSocialPlatform')}
                     {item.code ? ` · ${item.code}` : ''}
                   </p>
                 </div>
@@ -478,6 +485,10 @@ export function AdminStoreSettingsPage() {
                 <label>
                   {t('admin.nameRu')}
                   <input onChange={(event) => updatePlatformLabel(index, 'ru', event.target.value)} value={item.label.ru} />
+                </label>
+                <label>
+                  {t('admin.nameUz')}
+                  <input onChange={(event) => updatePlatformLabel(index, 'uz', event.target.value)} value={item.label.uz} />
                 </label>
               </div>
 

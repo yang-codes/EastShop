@@ -7,16 +7,12 @@ import { getTelegramInitData } from '../../lib/source'
 import { orderService } from '../../services/orderService'
 import { defaultPhonePrefixes, storeSettingsService, type PhonePrefixOption } from '../../services/storeSettingsService'
 import type { Order } from '../../types/order'
-import type { SupportedLanguage } from '../../types/language'
+import { resolveSupportedLanguage, type SupportedLanguage } from '../../types/language'
 
 type LookupMode = 'orderId' | 'socialHandle'
 
 function resolveLanguage(language: string): SupportedLanguage {
-  if (language === 'zh' || language === 'ru') {
-    return language
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 function formatCurrency(value: number) {

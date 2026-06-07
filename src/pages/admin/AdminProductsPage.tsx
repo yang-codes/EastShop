@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import { adminProductService } from '../../services/adminProductService'
 import { catalogService } from '../../services/catalogService'
 import { translationService } from '../../services/translationService'
+import { resolveSupportedLanguage } from '../../types/language'
 import type { Category, Product, ProductSpec, ProductVariant } from '../../types/product'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
 
@@ -14,9 +15,11 @@ type ProductSpecDraft = {
   id: string
   labelEn: string
   labelRu: string
+  labelUz: string
   labelZh: string
   valueEn: string
   valueRu: string
+  valueUz: string
   valueZh: string
 }
 
@@ -26,6 +29,7 @@ type ProductVariantDraft = {
   isDefault: boolean
   nameEn: string
   nameRu: string
+  nameUz: string
   nameZh: string
   price: string
   sku: string
@@ -40,9 +44,11 @@ type ProductDraft = {
   coverImagesText: string
   descriptionEn: string
   descriptionRu: string
+  descriptionUz: string
   descriptionZh: string
   detailEn: string
   detailRu: string
+  detailUz: string
   detailZh: string
   id: string
   imagesText: string
@@ -50,6 +56,7 @@ type ProductDraft = {
   isFeatured: boolean
   nameEn: string
   nameRu: string
+  nameUz: string
   nameZh: string
   sortOrder: string
   specs: ProductSpecDraft[]
@@ -61,15 +68,7 @@ const coverImageMaxWidth = 1200
 const detailImageMaxWidth = 1200
 
 function resolveLanguage(language: string) {
-  if (language.startsWith('zh')) {
-    return 'zh'
-  }
-
-  if (language.startsWith('ru')) {
-    return 'ru'
-  }
-
-  return 'en'
+  return resolveSupportedLanguage(language)
 }
 
 function createId(seed: string) {
@@ -97,9 +96,11 @@ function specToDraft(spec: ProductSpec): ProductSpecDraft {
     id: spec.id,
     labelEn: spec.label.en,
     labelRu: spec.label.ru,
+    labelUz: spec.label.uz,
     labelZh: spec.label.zh,
     valueEn: spec.value.en,
     valueRu: spec.value.ru,
+    valueUz: spec.value.uz,
     valueZh: spec.value.zh,
   }
 }
@@ -108,9 +109,11 @@ function draftSpecToSpec(spec: ProductSpecDraft): ProductSpec | null {
   const hasContent = [
     spec.labelEn,
     spec.labelRu,
+    spec.labelUz,
     spec.labelZh,
     spec.valueEn,
     spec.valueRu,
+    spec.valueUz,
     spec.valueZh,
   ].some((value) => value.trim())
 
@@ -119,15 +122,17 @@ function draftSpecToSpec(spec: ProductSpecDraft): ProductSpec | null {
   }
 
   return {
-    id: spec.id || createSpecId(spec.labelEn || spec.labelZh || spec.labelRu),
+    id: spec.id || createSpecId(spec.labelEn || spec.labelZh || spec.labelRu || spec.labelUz),
     label: {
       en: spec.labelEn,
       ru: spec.labelRu,
+      uz: spec.labelUz,
       zh: spec.labelZh,
     },
     value: {
       en: spec.valueEn,
       ru: spec.valueRu,
+      uz: spec.valueUz,
       zh: spec.valueZh,
     },
   }
@@ -140,6 +145,7 @@ function variantToDraft(variant: ProductVariant): ProductVariantDraft {
     isDefault: variant.isDefault,
     nameEn: variant.name.en,
     nameRu: variant.name.ru,
+    nameUz: variant.name.uz,
     nameZh: variant.name.zh,
     price: String(variant.price),
     sku: variant.sku ?? '',
@@ -149,19 +155,20 @@ function variantToDraft(variant: ProductVariant): ProductVariantDraft {
 
 function draftVariantToVariant(variant: ProductVariantDraft): ProductVariant | null {
   const nameZh = variant.nameZh.trim()
-  const hasContent = [variant.nameEn, variant.nameRu, variant.nameZh, variant.price, variant.sku].some((value) => value.trim())
+  const hasContent = [variant.nameEn, variant.nameRu, variant.nameUz, variant.nameZh, variant.price, variant.sku].some((value) => value.trim())
 
   if (!hasContent) {
     return null
   }
 
   return {
-    id: variant.id || createSpecId(nameZh || variant.nameEn || variant.nameRu || variant.sku),
+    id: variant.id || createSpecId(nameZh || variant.nameEn || variant.nameRu || variant.nameUz || variant.sku),
     isActive: variant.isActive,
     isDefault: variant.isDefault,
     name: {
       en: variant.nameEn.trim() || nameZh,
       ru: variant.nameRu.trim() || nameZh,
+      uz: variant.nameUz.trim() || nameZh,
       zh: nameZh,
     },
     price: Number(variant.price) || 0,
@@ -171,7 +178,7 @@ function draftVariantToVariant(variant: ProductVariantDraft): ProductVariant | n
 }
 
 function isEmptyVariantDraft(variant: ProductVariantDraft) {
-  return [variant.nameEn, variant.nameRu, variant.nameZh, variant.price, variant.sku].every((value) => !value.trim())
+  return [variant.nameEn, variant.nameRu, variant.nameUz, variant.nameZh, variant.price, variant.sku].every((value) => !value.trim())
 }
 
 function validateProductDraft(draft: ProductDraft) {
@@ -232,9 +239,11 @@ function createEmptyDraft(sortOrder: number): ProductDraft {
     coverImagesText: '',
     descriptionEn: '',
     descriptionRu: '',
+    descriptionUz: '',
     descriptionZh: '',
     detailEn: '',
     detailRu: '',
+    detailUz: '',
     detailZh: '',
     id: '',
     imagesText: '',
@@ -242,6 +251,7 @@ function createEmptyDraft(sortOrder: number): ProductDraft {
     isFeatured: false,
     nameEn: '',
     nameRu: '',
+    nameUz: '',
     nameZh: '',
     sortOrder: String(sortOrder),
     specs: [],
@@ -256,9 +266,11 @@ function productToDraft(product: Product): ProductDraft {
     coverImagesText: (product.coverImages.length > 0 ? product.coverImages : product.coverImage ? [product.coverImage] : []).join('\n'),
     descriptionEn: product.description.en,
     descriptionRu: product.description.ru,
+    descriptionUz: product.description.uz,
     descriptionZh: product.description.zh,
     detailEn: product.detail.en,
     detailRu: product.detail.ru,
+    detailUz: product.detail.uz,
     detailZh: product.detail.zh,
     id: product.id,
     imagesText: product.images.join('\n'),
@@ -266,6 +278,7 @@ function productToDraft(product: Product): ProductDraft {
     isFeatured: product.isFeatured,
     nameEn: product.name.en,
     nameRu: product.name.ru,
+    nameUz: product.name.uz,
     nameZh: product.name.zh,
     sortOrder: String(product.sortOrder),
     specs: product.specs.map(specToDraft),
@@ -304,11 +317,13 @@ function draftToProduct(draft: ProductDraft): Product {
     description: {
       en: draft.descriptionEn.trim() || descriptionZh,
       ru: draft.descriptionRu.trim() || descriptionZh,
+      uz: draft.descriptionUz.trim() || descriptionZh,
       zh: descriptionZh,
     },
     detail: {
       en: draft.detailEn.trim() || detailZh,
       ru: draft.detailRu.trim() || detailZh,
+      uz: draft.detailUz.trim() || detailZh,
       zh: detailZh,
     },
     id,
@@ -318,6 +333,7 @@ function draftToProduct(draft: ProductDraft): Product {
     name: {
       en: draft.nameEn.trim() || nameZh,
       ru: draft.nameRu.trim() || nameZh,
+      uz: draft.nameUz.trim() || nameZh,
       zh: nameZh,
     },
     sortOrder: Number(draft.sortOrder) || 0,
@@ -443,9 +459,11 @@ export function AdminProductsPage() {
           id: `spec-${Date.now()}`,
           labelEn: '',
           labelRu: '',
+          labelUz: '',
           labelZh: '',
           valueEn: '',
           valueRu: '',
+          valueUz: '',
           valueZh: '',
         },
       ],
@@ -477,6 +495,7 @@ export function AdminProductsPage() {
           isDefault: current.variants.length === 0,
           nameEn: '',
           nameRu: '',
+          nameUz: '',
           nameZh: '',
           price: '0',
           sku: '',
@@ -519,24 +538,27 @@ export function AdminProductsPage() {
   async function handleAutoFillBasicField(module: Extract<AutoFillModule, 'name' | 'description' | 'detail'>) {
     const fieldMap = {
       description: {
-        doneMessage: '已补齐简介的英文和俄文字段，请检查后保存。',
+        doneMessage: '已补齐简介的英文、俄文和乌兹语字段，请检查后保存。',
         enKey: 'descriptionEn',
         requiresMessage: '请先填写中文简介。',
         ruKey: 'descriptionRu',
+        uzKey: 'descriptionUz',
         zhKey: 'descriptionZh',
       },
       detail: {
-        doneMessage: '已补齐详情的英文和俄文字段，请检查后保存。',
+        doneMessage: '已补齐详情的英文、俄文和乌兹语字段，请检查后保存。',
         enKey: 'detailEn',
         requiresMessage: '请先填写中文详情。',
         ruKey: 'detailRu',
+        uzKey: 'detailUz',
         zhKey: 'detailZh',
       },
       name: {
-        doneMessage: '已补齐名称的英文和俄文字段，请检查后保存。',
+        doneMessage: '已补齐名称的英文、俄文和乌兹语字段，请检查后保存。',
         enKey: 'nameEn',
         requiresMessage: '请先填写中文名称。',
         ruKey: 'nameRu',
+        uzKey: 'nameUz',
         zhKey: 'nameZh',
       },
     } satisfies Record<Extract<AutoFillModule, 'name' | 'description' | 'detail'>, {
@@ -544,6 +566,7 @@ export function AdminProductsPage() {
       enKey: keyof ProductDraft
       requiresMessage: string
       ruKey: keyof ProductDraft
+      uzKey: keyof ProductDraft
       zhKey: keyof ProductDraft
     }>
     const config = fieldMap[module]
@@ -565,6 +588,7 @@ export function AdminProductsPage() {
         ...current,
         [config.enKey]: String(current[config.enKey]).trim() ? current[config.enKey] : translated.en,
         [config.ruKey]: String(current[config.ruKey]).trim() ? current[config.ruKey] : translated.ru,
+        [config.uzKey]: String(current[config.uzKey]).trim() ? current[config.uzKey] : translated.uz,
       }))
       setStatusMessage(config.doneMessage)
     } catch (error) {
@@ -587,21 +611,23 @@ export function AdminProductsPage() {
     setStatusMessage('')
 
     try {
-      const translatedSpecs: Record<string, Partial<Pick<ProductSpecDraft, 'labelEn' | 'labelRu' | 'valueEn' | 'valueRu'>>> = {}
+      const translatedSpecs: Record<string, Partial<Pick<ProductSpecDraft, 'labelEn' | 'labelRu' | 'labelUz' | 'valueEn' | 'valueRu' | 'valueUz'>>> = {}
 
       for (const spec of specsWithChinese) {
-        const translated: Partial<Pick<ProductSpecDraft, 'labelEn' | 'labelRu' | 'valueEn' | 'valueRu'>> = {}
+        const translated: Partial<Pick<ProductSpecDraft, 'labelEn' | 'labelRu' | 'labelUz' | 'valueEn' | 'valueRu' | 'valueUz'>> = {}
 
-        if (spec.labelZh.trim() && (!spec.labelEn.trim() || !spec.labelRu.trim())) {
+        if (spec.labelZh.trim() && (!spec.labelEn.trim() || !spec.labelRu.trim() || !spec.labelUz.trim())) {
           const label = await translateTextWithGap(spec.labelZh)
           translated.labelEn = label.en
           translated.labelRu = label.ru
+          translated.labelUz = label.uz
         }
 
-        if (spec.valueZh.trim() && (!spec.valueEn.trim() || !spec.valueRu.trim())) {
+        if (spec.valueZh.trim() && (!spec.valueEn.trim() || !spec.valueRu.trim() || !spec.valueUz.trim())) {
           const value = await translateTextWithGap(spec.valueZh)
           translated.valueEn = value.en
           translated.valueRu = value.ru
+          translated.valueUz = value.uz
         }
 
         translatedSpecs[spec.id] = translated
@@ -620,12 +646,14 @@ export function AdminProductsPage() {
             ...spec,
             labelEn: spec.labelEn.trim() ? spec.labelEn : translated.labelEn ?? spec.labelEn,
             labelRu: spec.labelRu.trim() ? spec.labelRu : translated.labelRu ?? spec.labelRu,
+            labelUz: spec.labelUz.trim() ? spec.labelUz : translated.labelUz ?? spec.labelUz,
             valueEn: spec.valueEn.trim() ? spec.valueEn : translated.valueEn ?? spec.valueEn,
             valueRu: spec.valueRu.trim() ? spec.valueRu : translated.valueRu ?? spec.valueRu,
+            valueUz: spec.valueUz.trim() ? spec.valueUz : translated.valueUz ?? spec.valueUz,
           }
         }),
       }))
-      setStatusMessage('已补齐规格属性的空白英文和俄文字段，请检查后保存。')
+      setStatusMessage('已补齐规格属性的空白英文、俄文和乌兹语字段，请检查后保存。')
     } catch (error) {
       setErrorMessage(getAdminErrorMessage(error))
     } finally {
@@ -646,10 +674,10 @@ export function AdminProductsPage() {
     setStatusMessage('')
 
     try {
-      const translatedVariants: Record<string, { nameEn: string; nameRu: string }> = {}
+      const translatedVariants: Record<string, { nameEn: string; nameRu: string; nameUz: string }> = {}
 
       for (const variant of variantsWithChinese) {
-        if (variant.nameEn.trim() && variant.nameRu.trim()) {
+        if (variant.nameEn.trim() && variant.nameRu.trim() && variant.nameUz.trim()) {
           continue
         }
 
@@ -657,6 +685,7 @@ export function AdminProductsPage() {
         translatedVariants[variant.id] = {
           nameEn: translated.en,
           nameRu: translated.ru,
+          nameUz: translated.uz,
         }
       }
 
@@ -673,10 +702,11 @@ export function AdminProductsPage() {
             ...variant,
             nameEn: variant.nameEn.trim() ? variant.nameEn : translated.nameEn,
             nameRu: variant.nameRu.trim() ? variant.nameRu : translated.nameRu,
+            nameUz: variant.nameUz.trim() ? variant.nameUz : translated.nameUz,
           }
         }),
       }))
-      setStatusMessage('已补齐销售规格的空白英文和俄文字段，请检查后保存。')
+      setStatusMessage('已补齐销售规格的空白英文、俄文和乌兹语字段，请检查后保存。')
     } catch (error) {
       setErrorMessage(getAdminErrorMessage(error))
     } finally {
@@ -1055,7 +1085,7 @@ export function AdminProductsPage() {
             <div className="editor-title-actions">
               <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillBasicField('name')} type="button">
                 <Languages size={18} />
-                {autoFillingModule === 'name' ? t('admin.autoFillingTranslations') : '补齐名称 EN/RU'}
+                {autoFillingModule === 'name' ? t('admin.autoFillingTranslations') : '补齐名称 EN/RU/UZ'}
               </button>
               <span className={`status-pill ${draft.isActive ? 'success' : 'muted'}`}>
                 {draft.isActive ? t('admin.active') : t('admin.inactive')}
@@ -1075,6 +1105,10 @@ export function AdminProductsPage() {
             <label>
               {t('admin.nameRu')}
               <input onChange={(event) => updateDraft('nameRu', event.target.value)} value={draft.nameRu} />
+            </label>
+            <label>
+              {t('admin.nameUz')}
+              <input onChange={(event) => updateDraft('nameUz', event.target.value)} value={draft.nameUz} />
             </label>
           </div>
           <div className="form-grid two-columns">
@@ -1107,11 +1141,11 @@ export function AdminProductsPage() {
           <div className="section-title-row inline-section-title">
             <div>
               <h3>商品简介</h3>
-              <small className="field-hint">只补齐简介区域的英文和俄文字段。</small>
+              <small className="field-hint">只补齐简介区域的英文、俄文和乌兹语字段。</small>
             </div>
             <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillBasicField('description')} type="button">
               <Languages size={18} />
-              {autoFillingModule === 'description' ? t('admin.autoFillingTranslations') : '补齐简介 EN/RU'}
+              {autoFillingModule === 'description' ? t('admin.autoFillingTranslations') : '补齐简介 EN/RU/UZ'}
             </button>
           </div>
           <div className="form-grid language-columns">
@@ -1126,6 +1160,10 @@ export function AdminProductsPage() {
             <label>
               {t('admin.descriptionRu')}
               <textarea onChange={(event) => updateDraft('descriptionRu', event.target.value)} rows={3} value={draft.descriptionRu} />
+            </label>
+            <label>
+              {t('admin.descriptionUz')}
+              <textarea onChange={(event) => updateDraft('descriptionUz', event.target.value)} rows={3} value={draft.descriptionUz} />
             </label>
           </div>
           <div className="form-grid two-columns">
@@ -1143,7 +1181,7 @@ export function AdminProductsPage() {
               <div className="section-actions">
                 <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillSpecs()} type="button">
                   <Languages size={18} />
-                  {autoFillingModule === 'specs' ? t('admin.autoFillingTranslations') : '补齐属性 EN/RU'}
+                  {autoFillingModule === 'specs' ? t('admin.autoFillingTranslations') : '补齐属性 EN/RU/UZ'}
                 </button>
                 <button className="secondary-button" onClick={addSpec} type="button">
                   <Plus size={18} />
@@ -1175,6 +1213,10 @@ export function AdminProductsPage() {
                       俄文属性名
                       <input onChange={(event) => updateSpec(spec.id, 'labelRu', event.target.value)} value={spec.labelRu} />
                     </label>
+                    <label>
+                      乌兹语属性名
+                      <input onChange={(event) => updateSpec(spec.id, 'labelUz', event.target.value)} value={spec.labelUz} />
+                    </label>
                   </div>
                   <div className="form-grid language-columns">
                     <label>
@@ -1188,6 +1230,10 @@ export function AdminProductsPage() {
                     <label>
                       俄文属性值
                       <input onChange={(event) => updateSpec(spec.id, 'valueRu', event.target.value)} value={spec.valueRu} />
+                    </label>
+                    <label>
+                      乌兹语属性值
+                      <input onChange={(event) => updateSpec(spec.id, 'valueUz', event.target.value)} value={spec.valueUz} />
                     </label>
                   </div>
                 </article>
@@ -1203,7 +1249,7 @@ export function AdminProductsPage() {
               <div className="section-actions">
                 <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillVariants()} type="button">
                   <Languages size={18} />
-                  {autoFillingModule === 'variants' ? t('admin.autoFillingTranslations') : '补齐规格 EN/RU'}
+                  {autoFillingModule === 'variants' ? t('admin.autoFillingTranslations') : '补齐规格 EN/RU/UZ'}
                 </button>
                 <button className="secondary-button" onClick={addVariant} type="button">
                   <Plus size={18} />
@@ -1234,6 +1280,10 @@ export function AdminProductsPage() {
                     <label>
                       俄文规格名
                       <input onChange={(event) => updateVariant(variant.id, 'nameRu', event.target.value)} value={variant.nameRu} />
+                    </label>
+                    <label>
+                      乌兹语规格名
+                      <input onChange={(event) => updateVariant(variant.id, 'nameUz', event.target.value)} value={variant.nameUz} />
                     </label>
                   </div>
                   <div className="form-grid language-columns">
@@ -1267,11 +1317,11 @@ export function AdminProductsPage() {
           <div className="section-title-row inline-section-title">
             <div>
               <h3>商品详情</h3>
-              <small className="field-hint">只补齐详情区域的英文和俄文字段。</small>
+              <small className="field-hint">只补齐详情区域的英文、俄文和乌兹语字段。</small>
             </div>
             <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillBasicField('detail')} type="button">
               <Languages size={18} />
-              {autoFillingModule === 'detail' ? t('admin.autoFillingTranslations') : '补齐详情 EN/RU'}
+              {autoFillingModule === 'detail' ? t('admin.autoFillingTranslations') : '补齐详情 EN/RU/UZ'}
             </button>
           </div>
           <div className="form-grid language-columns">
@@ -1286,6 +1336,10 @@ export function AdminProductsPage() {
             <label>
               {t('admin.detailRu')}
               <textarea onChange={(event) => updateDraft('detailRu', event.target.value)} rows={4} value={draft.detailRu} />
+            </label>
+            <label>
+              {t('admin.detailUz')}
+              <textarea onChange={(event) => updateDraft('detailUz', event.target.value)} rows={4} value={draft.detailUz} />
             </label>
           </div>
           <div className="form-grid">

@@ -9,9 +9,9 @@ type TranslateTextResponse = {
 
 export const translationService = {
   /**
-   * 根据中文商品文案生成三语文案结构。
-   * 业务用途：后台商品编辑时辅助把中文名称、简介或详情翻译成英文和俄文。
-   * 当前通过 Supabase Edge Function 代理腾讯云机器翻译，避免把腾讯云 SecretKey 暴露在浏览器。
+   * 根据中文商品文案生成多语文案结构。
+   * 业务用途：后台商品编辑时辅助把中文名称、简介或详情翻译成英文、俄文和乌兹语。
+   * 当前通过 Supabase Edge Function 代理阿里云机器翻译，避免把 AccessKey Secret 暴露在浏览器。
    */
   async translateFromChinese(text: string): Promise<LocalizedText> {
     const sourceText = text.trim()
@@ -20,6 +20,7 @@ export const translationService = {
       return {
         en: '',
         ru: '',
+        uz: '',
         zh: '',
       }
     }
@@ -67,6 +68,7 @@ export const translationService = {
     return {
       en: result.translations.en,
       ru: result.translations.ru,
+      uz: result.translations.uz,
       zh: result.translations.zh,
     }
   },

@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 type EntrySource = 'telegram' | 'instagram' | 'web'
-type SupportedLanguage = 'zh' | 'en' | 'ru'
+type SupportedLanguage = 'zh' | 'en' | 'ru' | 'uz'
 
 type CartLine = {
   productId: string
@@ -43,6 +43,7 @@ type ProductRow = {
   is_active: boolean
   name_en: string
   name_ru: string
+  name_uz: string
   name_zh: string
   specs: unknown
   variants?: unknown
@@ -210,18 +211,22 @@ function isDuplicateOrderDatabaseError(error: unknown) {
 
 function getLocalizedName(product: ProductRow, language: SupportedLanguage) {
   if (language === 'zh') {
-    return product.name_zh || product.name_en || product.name_ru || product.id
+    return product.name_zh || product.name_en || product.name_ru || product.name_uz || product.id
   }
 
   if (language === 'ru') {
-    return product.name_ru || product.name_en || product.name_zh || product.id
+    return product.name_ru || product.name_en || product.name_zh || product.name_uz || product.id
   }
 
-  return product.name_en || product.name_zh || product.name_ru || product.id
+  if (language === 'uz') {
+    return product.name_uz || product.name_zh || product.name_en || product.name_ru || product.id
+  }
+
+  return product.name_en || product.name_zh || product.name_ru || product.name_uz || product.id
 }
 
 function getLocalizedVariantName(variant: { name?: Record<string, string> }, language: SupportedLanguage) {
-  return variant.name?.[language] || variant.name?.zh || variant.name?.en || variant.name?.ru || ''
+  return variant.name?.[language] || variant.name?.zh || variant.name?.en || variant.name?.ru || variant.name?.uz || ''
 }
 
 function getProductVariants(product: ProductRow) {
@@ -525,7 +530,7 @@ Deno.serve(async (request) => {
     const input = (await request.json()) as SubmitOrderInput
     assertHoneypot(input)
 
-    const language = input.language === 'zh' || input.language === 'ru' ? input.language : 'en'
+    const language = input.language === 'zh' || input.language === 'ru' || input.language === 'uz' ? input.language : 'en'
     const source = input.source === 'telegram' || input.source === 'instagram' || input.source === 'web' ? input.source : 'web'
     let telegramUser: Record<string, unknown> | null = null
     let telegramAuthDate: number | null = null
@@ -575,7 +580,7 @@ Deno.serve(async (request) => {
     })
 
     const productIds = cart.map((line) => line.productId)
-    const { data: products, error: productsError } = await supabase.from('products').select('id, name_zh, name_en, name_ru, cover_image, specs, variants, is_active').in('id', productIds)
+    const { data: products, error: productsError } = await supabase.from('products').select('id, name_zh, name_en, name_ru, name_uz, cover_image, specs, variants, is_active').in('id', productIds)
 
     if (productsError) {
       throw new ResponseError('PRODUCTS_QUERY_FAILED', formatUnknownError(productsError), 500)
