@@ -1960,8 +1960,8 @@ p {
     padding: 0 12px;
   }
 
-  .product-purchase-card .spec-list div {
-    grid-template-columns: 84px minmax(0, 1fr);
+.product-purchase-card .spec-list div {
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 10px 0;
   }
 
@@ -2197,16 +2197,21 @@ p {
   display: grid;
   gap: 8px;
   grid-template-columns: 120px minmax(0, 1fr);
+  min-width: 0;
   padding: 12px 0;
 }
 
 .spec-list dt {
   color: var(--muted);
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .spec-list dd {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 520px) {
@@ -2253,7 +2258,7 @@ p {
   }
 
   .product-purchase-card .spec-list div {
-    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .variant-selector > div {
