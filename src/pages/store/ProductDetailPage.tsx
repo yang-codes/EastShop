@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { detectEntrySource } from '../../lib/source'
 import { cartService } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
 import type { Product } from '../../types/product'
@@ -189,8 +188,7 @@ export function ProductDetailPage() {
   const { i18n, t } = useTranslation()
   const { productId } = useParams()
   const navigate = useNavigate()
-  const entrySource = detectEntrySource()
-  const showProductSwitcher = entrySource === 'web'
+  const showProductSwitcher = true
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [product, setProduct] = useState<Product | null>(null)

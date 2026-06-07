@@ -1,6 +1,7 @@
 import type { EntrySource } from '../types/order'
 
 const entrySourceStorageKey = 'eastshop.entrySource'
+const webHostnames = new Set(['localhost', '127.0.0.1', 'www.yangshop.online', 'yangshop.online'])
 
 function normalizeEntrySource(source: string | null): EntrySource | null {
   if (source === 'instagram' || source === 'web' || source === 'telegram') {
@@ -37,6 +38,10 @@ function getRememberedEntrySource(): EntrySource | null {
   }
 }
 
+function isKnownWebHost() {
+  return webHostnames.has(window.location.hostname.toLowerCase())
+}
+
 function isInstagramRuntime() {
   const userAgent = window.navigator.userAgent
   const vendor = window.navigator.vendor
@@ -53,6 +58,11 @@ export function detectEntrySource(): EntrySource {
   if (urlSource) {
     rememberEntrySource(urlSource)
     return urlSource
+  }
+
+  if (isKnownWebHost()) {
+    rememberEntrySource('web')
+    return 'web'
   }
 
   if (window.Telegram?.WebApp) {

@@ -364,7 +364,7 @@ p {
   align-items: start;
   display: grid;
   gap: 22px;
-  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
 }
 
 .product-detail-route-shell-single {
@@ -1347,7 +1347,7 @@ p {
   align-items: start;
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 1fr) clamp(280px, 30%, 360px);
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 28%, 340px);
 }
 
 .detail-panel > .form-card {
@@ -1445,28 +1445,6 @@ p {
 .cover-carousel-dots button.active {
   background: #fff;
   width: 22px;
-}
-
-@media (min-width: 1360px) {
-  .product-detail-route-shell .store-product-detail-pane {
-    padding-right: 344px;
-  }
-
-  .product-detail-route-shell-single .store-product-detail-pane {
-    padding-right: 0;
-  }
-
-  .product-detail-route-shell .detail-panel {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .product-detail-route-shell .product-purchase-card {
-    position: fixed;
-    right: max(20px, calc((100vw - 1540px) / 2 + 20px));
-    top: 88px;
-    width: 320px;
-    z-index: 5;
-  }
 }
 
 .media-label {
