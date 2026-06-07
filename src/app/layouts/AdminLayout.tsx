@@ -5,15 +5,40 @@ import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-route
 import { LanguageSwitcher } from '../../components/LanguageSwitcher'
 import { isSupabaseConfigured } from '../../lib/supabaseClient'
 import { authService } from '../../services/authService'
+import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
 import type { AdminProfile } from '../../types/admin'
+import { resolveSupportedLanguage } from '../../types/language'
 
 export function AdminLayout() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
+  const language = resolveSupportedLanguage(i18n.language)
   const [admin, setAdmin] = useState<AdminProfile | null>(null)
   const [authState, setAuthState] = useState<'checking' | 'authorized' | 'unauthorized'>('checking')
   const [errorMessage, setErrorMessage] = useState('')
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    void storeSettingsService
+      .getSettings()
+      .then((settings) => {
+        if (isMounted) {
+          setStoreSettings(settings)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setStoreSettings(null)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -55,6 +80,9 @@ export function AdminLayout() {
     }
   }, [])
 
+  const storeTitle = storeSettings?.storeTitle[language] || 'EastShop'
+  const adminTitle = t('admin.title').replace('EastShop', storeTitle)
+
   async function handleLogout() {
     try {
       await authService.signOut()
@@ -80,7 +108,7 @@ export function AdminLayout() {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <div className="brand admin-brand">EastShop</div>
+        <div className="brand admin-brand">{storeTitle}</div>
         {admin ? (
           <div className="admin-profile">
             <strong>{admin.displayName || admin.email}</strong>
@@ -122,7 +150,7 @@ export function AdminLayout() {
         <header className="admin-header">
           <div>
             <p className="eyebrow">{t('admin.console')}</p>
-            <h1>{t('admin.title')}</h1>
+            <h1>{adminTitle}</h1>
           </div>
           <LanguageSwitcher />
         </header>

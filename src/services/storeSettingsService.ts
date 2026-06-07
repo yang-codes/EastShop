@@ -19,12 +19,16 @@ export type SocialPlatformOption = {
 }
 
 export type StoreSettings = {
+  storeDescription: LocalizedText
+  storeTitle: LocalizedText
   phonePrefixes: PhonePrefixOption[]
   socialPlatforms: SocialPlatformOption[]
 }
 
 type StoreSettingsRow = {
   id: string
+  store_description?: unknown
+  store_title?: unknown
   phone_prefixes: unknown
   social_platforms?: unknown
 }
@@ -48,6 +52,18 @@ export const defaultSocialPlatforms: SocialPlatformOption[] = [
 ]
 
 const defaultSettings: StoreSettings = {
+  storeDescription: createLocalizedText({
+    zh: '面向中亚市场的多语言商品商城。',
+    en: 'A multilingual product store for Central Asia.',
+    ru: 'Многоязычный каталог товаров для Центральной Азии.',
+    uz: 'Markaziy Osiyo uchun ko‘p tilli mahsulotlar do‘koni.',
+  }),
+  storeTitle: createLocalizedText({
+    zh: 'EastShop',
+    en: 'EastShop',
+    ru: 'EastShop',
+    uz: 'EastShop',
+  }),
   phonePrefixes: defaultPhonePrefixes,
   socialPlatforms: defaultSocialPlatforms,
 }
@@ -142,12 +158,28 @@ export function normalizeSocialPlatforms(value: unknown): SocialPlatformOption[]
   return platforms.length > 0 ? platforms : defaultSocialPlatforms
 }
 
+function normalizeLocalizedText(value: unknown, fallback: LocalizedText): LocalizedText {
+  if (!value || typeof value !== 'object') {
+    return fallback
+  }
+
+  const record = value as Partial<LocalizedText>
+  return createLocalizedText({
+    zh: String(record.zh ?? fallback.zh).trim() || fallback.zh,
+    en: String(record.en ?? record.zh ?? fallback.en).trim() || fallback.en,
+    ru: String(record.ru ?? record.zh ?? fallback.ru).trim() || fallback.ru,
+    uz: String(record.uz ?? record.zh ?? fallback.uz).trim() || fallback.uz,
+  })
+}
+
 function mapSettings(row: StoreSettingsRow | null): StoreSettings {
   if (!row) {
     return defaultSettings
   }
 
   return {
+    storeDescription: normalizeLocalizedText(row.store_description, defaultSettings.storeDescription),
+    storeTitle: normalizeLocalizedText(row.store_title, defaultSettings.storeTitle),
     phonePrefixes: normalizePhonePrefixes(row.phone_prefixes),
     socialPlatforms: normalizeSocialPlatforms(row.social_platforms),
   }
@@ -161,7 +193,7 @@ export const storeSettingsService = {
 
     const { data, error } = await getSupabaseClient()
       .from('store_settings')
-      .select('id, phone_prefixes, social_platforms')
+      .select('id, store_title, store_description, phone_prefixes, social_platforms')
       .eq('id', 'default')
       .maybeSingle()
 
@@ -180,10 +212,12 @@ export const storeSettingsService = {
       .from('store_settings')
       .upsert({
         id: 'default',
+        store_description: normalizeLocalizedText(settings.storeDescription, defaultSettings.storeDescription),
+        store_title: normalizeLocalizedText(settings.storeTitle, defaultSettings.storeTitle),
         phone_prefixes: phonePrefixes,
         social_platforms: socialPlatforms,
       })
-      .select('id, phone_prefixes, social_platforms')
+      .select('id, store_title, store_description, phone_prefixes, social_platforms')
       .single()
 
     if (error) {

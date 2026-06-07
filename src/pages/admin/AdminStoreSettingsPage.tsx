@@ -13,7 +13,7 @@ import {
   type SocialPlatformOption,
 } from '../../services/storeSettingsService'
 import { translationService } from '../../services/translationService'
-import type { SupportedLanguage } from '../../types/language'
+import { createLocalizedText, type LocalizedText, type SupportedLanguage } from '../../types/language'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
 
 function createPrefixDraft(sortOrder: number): PhonePrefixOption {
@@ -53,6 +53,13 @@ function normalizePlatformCodeInput(value: string) {
 
 export function AdminStoreSettingsPage() {
   const { t } = useTranslation()
+  const [storeTitle, setStoreTitle] = useState<LocalizedText>(createLocalizedText({ zh: 'EastShop' }))
+  const [storeDescription, setStoreDescription] = useState<LocalizedText>(createLocalizedText({
+    zh: '面向中亚市场的多语言商品商城。',
+    en: 'A multilingual product store for Central Asia.',
+    ru: 'Многоязычный каталог товаров для Центральной Азии.',
+    uz: 'Markaziy Osiyo uchun ko‘p tilli mahsulotlar do‘koni.',
+  }))
   const prefixCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const prefixNameInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const platformCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -63,11 +70,12 @@ export function AdminStoreSettingsPage() {
   const [statusMessage, setStatusMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [autoFillingStoreField, setAutoFillingStoreField] = useState<'title' | 'description' | ''>('')
   const [autoFillingPrefixId, setAutoFillingPrefixId] = useState('')
   const [autoFillingPlatformId, setAutoFillingPlatformId] = useState('')
   const [pendingScrollPrefixId, setPendingScrollPrefixId] = useState('')
   const [pendingScrollPlatformId, setPendingScrollPlatformId] = useState('')
-  const isAutoFilling = Boolean(autoFillingPrefixId || autoFillingPlatformId)
+  const isAutoFilling = Boolean(autoFillingStoreField || autoFillingPrefixId || autoFillingPlatformId)
 
   useEffect(() => {
     let isMounted = true
@@ -79,6 +87,8 @@ export function AdminStoreSettingsPage() {
       try {
         const settings = await storeSettingsService.getSettings()
         if (isMounted) {
+          setStoreTitle(settings.storeTitle)
+          setStoreDescription(settings.storeDescription)
           setPhonePrefixes(settings.phonePrefixes)
           setSocialPlatforms(settings.socialPlatforms)
         }
@@ -219,6 +229,57 @@ export function AdminStoreSettingsPage() {
     )))
   }
 
+  function updateStoreText(field: 'title' | 'description', language: SupportedLanguage, value: string) {
+    const update = (current: LocalizedText) => ({ ...current, [language]: value })
+    if (field === 'title') {
+      setStoreTitle(update)
+      return
+    }
+
+    setStoreDescription(update)
+  }
+
+  async function handleAutoFillStoreField(field: 'title' | 'description') {
+    const current = field === 'title' ? storeTitle : storeDescription
+    const sourceText = current.zh.trim()
+
+    if (!sourceText) {
+      setErrorMessage(t('admin.storeFrontAutoFillRequiresChinese'))
+      return
+    }
+
+    if (current.en.trim() && current.ru.trim() && current.uz.trim()) {
+      setStatusMessage(t('admin.storeFrontAutoFillNothing'))
+      return
+    }
+
+    setAutoFillingStoreField(field)
+    setStatusMessage('')
+    setErrorMessage('')
+
+    try {
+      const translated = await translationService.translateFromChinese(sourceText)
+      const next = createLocalizedText({
+        zh: sourceText,
+        en: current.en.trim() || translated.en,
+        ru: current.ru.trim() || translated.ru,
+        uz: current.uz.trim() || translated.uz,
+      })
+
+      if (field === 'title') {
+        setStoreTitle(next)
+      } else {
+        setStoreDescription(next)
+      }
+
+      setStatusMessage(t('admin.storeFrontAutoFillDone'))
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : t('admin.translationFailed'))
+    } finally {
+      setAutoFillingStoreField('')
+    }
+  }
+
   function addPlatform() {
     const draft = createSocialPlatformDraft(socialPlatforms.length + 1)
     setSocialPlatforms((items) => [...items, draft])
@@ -294,6 +355,8 @@ export function AdminStoreSettingsPage() {
       }))
 
       if (!isSupabaseConfigured()) {
+        setStoreTitle(storeTitle)
+        setStoreDescription(storeDescription)
         setPhonePrefixes(normalized)
         setSocialPlatforms(normalizedSocialPlatforms)
         setStatusMessage(t('admin.savedLocally'))
@@ -302,9 +365,13 @@ export function AdminStoreSettingsPage() {
       }
 
       const saved = await storeSettingsService.saveSettings({
+        storeDescription,
+        storeTitle,
         phonePrefixes: normalized,
         socialPlatforms: normalizedSocialPlatforms,
       })
+      setStoreTitle(saved.storeTitle)
+      setStoreDescription(saved.storeDescription)
       setPhonePrefixes(saved.phonePrefixes)
       setSocialPlatforms(saved.socialPlatforms)
       setStatusMessage(t('admin.storeSettingsSaved'))
@@ -324,6 +391,77 @@ export function AdminStoreSettingsPage() {
       {errorMessage ? <p className="auth-message error">{errorMessage}</p> : null}
 
       <form className="form-card admin-edit-form" onSubmit={(event) => void handleSave(event)}>
+        <div className="section-title-row">
+          <div>
+            <h2>{t('admin.storeFrontSettings')}</h2>
+            <p>{t('admin.storeFrontSettingsHelp')}</p>
+          </div>
+        </div>
+
+        <div className="form-grid">
+          <label>
+            {t('admin.storeTitleZh')}
+            <input onChange={(event) => updateStoreText('title', 'zh', event.target.value)} value={storeTitle.zh} />
+          </label>
+          <label>
+            {t('admin.storeTitleEn')}
+            <input onChange={(event) => updateStoreText('title', 'en', event.target.value)} value={storeTitle.en} />
+          </label>
+          <label>
+            {t('admin.storeTitleRu')}
+            <input onChange={(event) => updateStoreText('title', 'ru', event.target.value)} value={storeTitle.ru} />
+          </label>
+          <label>
+            {t('admin.storeTitleUz')}
+            <input onChange={(event) => updateStoreText('title', 'uz', event.target.value)} value={storeTitle.uz} />
+          </label>
+        </div>
+
+        <div className="section-actions">
+          <button
+            className="secondary-button"
+            disabled={isLoading || isSaving || isAutoFilling}
+            onClick={() => void handleAutoFillStoreField('title')}
+            type="button"
+          >
+            <Languages size={18} />
+            {autoFillingStoreField === 'title' ? t('admin.autoFillingTranslations') : t('admin.storeFrontAutoFillTitle')}
+          </button>
+        </div>
+
+        <div className="form-grid">
+          <label>
+            {t('admin.storeDescriptionZh')}
+            <textarea onChange={(event) => updateStoreText('description', 'zh', event.target.value)} rows={3} value={storeDescription.zh} />
+          </label>
+          <label>
+            {t('admin.storeDescriptionEn')}
+            <textarea onChange={(event) => updateStoreText('description', 'en', event.target.value)} rows={3} value={storeDescription.en} />
+          </label>
+          <label>
+            {t('admin.storeDescriptionRu')}
+            <textarea onChange={(event) => updateStoreText('description', 'ru', event.target.value)} rows={3} value={storeDescription.ru} />
+          </label>
+          <label>
+            {t('admin.storeDescriptionUz')}
+            <textarea onChange={(event) => updateStoreText('description', 'uz', event.target.value)} rows={3} value={storeDescription.uz} />
+          </label>
+        </div>
+
+        <div className="section-actions">
+          <button
+            className="secondary-button"
+            disabled={isLoading || isSaving || isAutoFilling}
+            onClick={() => void handleAutoFillStoreField('description')}
+            type="button"
+          >
+            <Languages size={18} />
+            {autoFillingStoreField === 'description' ? t('admin.autoFillingTranslations') : t('admin.storeFrontAutoFillDescription')}
+          </button>
+        </div>
+
+        <div className="store-settings-divider" />
+
         <div className="section-title-row">
           <div>
             <h2>{t('admin.phonePrefixSettings')}</h2>

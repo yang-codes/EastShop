@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { catalogService } from '../../services/catalogService'
+import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
 import { resolveSupportedLanguage } from '../../types/language'
 import type { Category, Product } from '../../types/product'
 
@@ -18,6 +19,7 @@ export function StoreHomePage() {
   const [query, setQuery] = useState('')
   const [categoryId, setCategoryId] = useState('all')
   const [featuredOnly, setFeaturedOnly] = useState(false)
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -29,14 +31,16 @@ export function StoreHomePage() {
       setErrorMessage('')
 
       try {
-        const [activeProducts, activeCategories] = await Promise.all([
+        const [activeProducts, activeCategories, settings] = await Promise.all([
           catalogService.listActiveProducts(),
           catalogService.listActiveCategories(),
+          storeSettingsService.getSettings(),
         ])
 
         if (isMounted) {
           setProducts(activeProducts)
           setCategories(activeCategories)
+          setStoreSettings(settings)
         }
       } catch (error) {
         if (isMounted) {
@@ -83,7 +87,10 @@ export function StoreHomePage() {
 
   return (
     <section className="page-stack">
-      <PageHeader description={t('store.heroText')} title={t('store.heroTitle')} />
+      <PageHeader
+        description={storeSettings?.storeDescription[language] || t('store.heroText')}
+        title={storeSettings?.storeTitle[language] || t('store.heroTitle')}
+      />
       <div className="store-filter-bar">
         <div className="store-search-combo">
           <select aria-label={t('store.categoryFilter')} onChange={(event) => setCategoryId(event.target.value)} value={categoryId}>

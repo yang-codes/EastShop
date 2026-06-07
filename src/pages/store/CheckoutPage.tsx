@@ -206,7 +206,7 @@ export function CheckoutPage() {
         : locationLine
 
       setLocation(snapshot)
-      setAddress((current) => (current.trim() ? `${current}\n${detectedAddress}` : detectedAddress))
+      setAddress(detectedAddress)
       setLocationStatus(addressLine)
     } catch (error) {
       setLocation(null)

@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { cartService } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
+import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
 import { resolveSupportedLanguage } from '../../types/language'
 import type { Product } from '../../types/product'
 
@@ -143,8 +144,8 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
             ))}
           </div>
           {activeVariants.length > 0 ? (
-            <div className="variant-selector" aria-label="商品规格">
-              <strong>规格</strong>
+            <div className="variant-selector" aria-label={t('store.variantSelector')}>
+              <strong>{t('store.variantSelector')}</strong>
               <div>
                 {activeVariants.map((variant) => (
                   <button
@@ -187,6 +188,28 @@ export function ProductDetailPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
   const [products, setProducts] = useState<Product[]>([])
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    void storeSettingsService
+      .getSettings()
+      .then((settings) => {
+        if (isMounted) {
+          setStoreSettings(settings)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setStoreSettings(null)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!productId) {
@@ -284,7 +307,10 @@ export function ProductDetailPage() {
     <section className={`store-catalog-shell product-detail-route-shell${showProductSwitcher ? '' : ' product-detail-route-shell-single'}`}>
       {showProductSwitcher ? (
         <aside className="store-product-sidebar product-detail-product-switcher">
-          <PageHeader description={t('store.heroText')} title={t('store.heroTitle')} />
+          <PageHeader
+            description={storeSettings?.storeDescription[language] || t('store.heroText')}
+            title={storeSettings?.storeTitle[language] || t('store.heroTitle')}
+          />
           <div className="store-product-list">
             {products.map((item) => (
               <button

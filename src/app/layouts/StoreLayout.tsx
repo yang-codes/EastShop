@@ -1,18 +1,41 @@
 import { Home, Languages, ShoppingCart } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
-import { detectEntrySource } from '../../lib/source'
 import { LanguageSwitcher } from '../../components/LanguageSwitcher'
+import { detectEntrySource } from '../../lib/source'
+import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
+import { resolveSupportedLanguage } from '../../types/language'
 
 export function StoreLayout() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const source = detectEntrySource()
+  const language = resolveSupportedLanguage(i18n.language)
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    void storeSettingsService.getSettings().then((settings) => {
+      if (isMounted) {
+        setStoreSettings(settings)
+      }
+    }).catch(() => {
+      if (isMounted) {
+        setStoreSettings(null)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
     <div className="app-shell store-shell">
       <header className="topbar">
         <Link className="brand" to="/">
-          EastShop
+          {storeSettings?.storeTitle[language] || 'EastShop'}
         </Link>
         <nav className="nav-actions" aria-label={t('navigation.store')}>
           <span className="source-pill">{t(`source.${source}`)}</span>
