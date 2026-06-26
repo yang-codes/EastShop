@@ -33,5 +33,5 @@ export function resolveSupportedLanguage(language: string): SupportedLanguage {
     return 'uz'
   }
 
-  return 'en'
+  return 'uz'
 }

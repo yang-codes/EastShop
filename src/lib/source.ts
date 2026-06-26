@@ -2,6 +2,7 @@ import type { EntrySource } from '../types/order'
 
 const entrySourceStorageKey = 'eastshop.entrySource'
 const webHostnames = new Set(['localhost', '127.0.0.1', 'www.yangshop.online', 'yangshop.online'])
+const telegramInitDataPollIntervalMs = 100
 
 function normalizeEntrySource(source: string | null): EntrySource | null {
   const normalizedSource = source?.trim().toLowerCase()
@@ -97,5 +98,35 @@ export function detectEntrySource(): EntrySource {
 }
 
 export function getTelegramInitData() {
-  return window.Telegram?.WebApp?.initData?.trim() ?? ''
+  const sdkInitData = window.Telegram?.WebApp?.initData?.trim()
+
+  if (sdkInitData) {
+    return sdkInitData
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+  const hashParams = new URLSearchParams(hash.includes('?') ? hash.split('?').pop() : hash)
+
+  return params.get('tgWebAppData')?.trim() ?? hashParams.get('tgWebAppData')?.trim() ?? ''
+}
+
+export function waitForTelegramInitData(timeoutMs = 2_000): Promise<string> {
+  const initialInitData = getTelegramInitData()
+
+  if (initialInitData) {
+    return Promise.resolve(initialInitData)
+  }
+
+  return new Promise((resolve) => {
+    const startedAt = Date.now()
+    const intervalId = window.setInterval(() => {
+      const initData = getTelegramInitData()
+
+      if (initData || Date.now() - startedAt >= timeoutMs) {
+        window.clearInterval(intervalId)
+        resolve(initData)
+      }
+    }, telegramInitDataPollIntervalMs)
+  })
 }

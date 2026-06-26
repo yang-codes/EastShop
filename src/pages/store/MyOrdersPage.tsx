@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../../components/PageHeader'
-import { getTelegramInitData } from '../../lib/source'
+import { waitForTelegramInitData } from '../../lib/source'
 import { orderService } from '../../services/orderService'
 import { defaultPhonePrefixes, storeSettingsService, type PhonePrefixOption } from '../../services/storeSettingsService'
 import type { Order } from '../../types/order'
@@ -78,11 +78,22 @@ export function MyOrdersPage() {
   }
 
   useEffect(() => {
-    const initData = getTelegramInitData()
-    setTelegramInitData(initData)
+    let isMounted = true
 
-    if (initData) {
-      void lookupWithTelegramIdentity(initData)
+    void waitForTelegramInitData().then((initData) => {
+      if (!isMounted) {
+        return
+      }
+
+      setTelegramInitData(initData)
+
+      if (initData) {
+        void lookupWithTelegramIdentity(initData)
+      }
+    })
+
+    return () => {
+      isMounted = false
     }
   }, [])
 

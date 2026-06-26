@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next'
 import { resources } from './resources'
 import { resolveSupportedLanguage, type SupportedLanguage } from '../types/language'
 
-const supportedLanguages: SupportedLanguage[] = ['zh', 'en', 'ru', 'uz']
+const supportedLanguages: SupportedLanguage[] = ['uz', 'zh', 'en', 'ru']
 const languageStorageKey = 'eastshop.language'
 
 function getStoredLanguage() {
@@ -40,11 +40,11 @@ function resolveInitialLanguage(): SupportedLanguage {
     }
   }
 
-  return 'en'
+  return 'uz'
 }
 
 void i18n.use(initReactI18next).init({
-  fallbackLng: 'en',
+  fallbackLng: 'uz',
   interpolation: {
     escapeValue: false,
   },
