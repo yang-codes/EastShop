@@ -139,7 +139,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
           </div>
           <p>{product.detail[language]}</p>
           <div className="tag-row">
-            {product.tags.map((tag) => (
+            {(product.tags[language] ?? product.tags.zh).map((tag) => (
               <span key={tag}>{tag}</span>
             ))}
           </div>

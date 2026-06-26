@@ -1,6 +1,6 @@
 import { getSupabaseClient } from '../lib/supabaseClient'
 import { createLocalizedText } from '../types/language'
-import type { Category, Product, ProductSpec, ProductVariant } from '../types/product'
+import type { Category, LocalizedTags, Product, ProductSpec, ProductVariant } from '../types/product'
 
 const productImagesBucket = 'product-images'
 
@@ -79,6 +79,26 @@ type CategoryRow = {
  */
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+/**
+ * 将 DB 的 tags 字段规范化为四语言标签对象。
+ * 向下兼容旧格式（string[]）：旧数据会被映射到所有语言，不丢失任何标签。
+ */
+function asProductTags(value: unknown): LocalizedTags {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>
+    return {
+      en: asStringArray(obj['en']),
+      ru: asStringArray(obj['ru']),
+      uz: asStringArray(obj['uz']),
+      zh: asStringArray(obj['zh']),
+    }
+  }
+
+  // 旧格式：string[] — 填充到所有语言
+  const legacy = asStringArray(value)
+  return { en: legacy, ru: legacy, uz: legacy, zh: legacy }
 }
 
 function resolveCoverImages(coverImages: unknown, coverImage?: string | null): string[] {
@@ -183,7 +203,7 @@ function mapProduct(row: ProductRow): Product {
     }),
     sortOrder: row.sort_order,
     specs: asProductSpecs(row.specs),
-    tags: asStringArray(row.tags),
+    tags: asProductTags(row.tags),
     variants: asProductVariants(row.variants),
   }
 }

@@ -1,4 +1,11 @@
-﻿import type { LocalizedText } from './language'
+import type { LocalizedText } from './language'
+
+export type LocalizedTags = {
+  zh: string[]
+  en: string[]
+  ru: string[]
+  uz: string[]
+}
 
 export type Category = {
   id: string
@@ -34,7 +41,7 @@ export type Product = {
   images: string[]
   specs: ProductSpec[]
   variants: ProductVariant[]
-  tags: string[]
+  tags: LocalizedTags
   sortOrder: number
   isFeatured: boolean
   isActive: boolean

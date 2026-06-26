@@ -8,7 +8,7 @@ import { adminProductService } from '../../services/adminProductService'
 import { catalogService } from '../../services/catalogService'
 import { translationService } from '../../services/translationService'
 import { resolveSupportedLanguage } from '../../types/language'
-import type { Category, Product, ProductSpec, ProductVariant } from '../../types/product'
+import type { Category, LocalizedTags, Product, ProductSpec, ProductVariant } from '../../types/product'
 import { scrollAdminPageToTop } from '../../utils/adminScroll'
 
 type ProductSpecDraft = {
@@ -37,7 +37,7 @@ type ProductVariantDraft = {
 }
 
 type ImageListField = 'coverImagesText' | 'imagesText'
-type AutoFillModule = 'name' | 'description' | 'detail' | 'specs' | 'variants'
+type AutoFillModule = 'name' | 'description' | 'detail' | 'specs' | 'variants' | 'tags'
 
 type ProductDraft = {
   categoryId: string
@@ -60,7 +60,10 @@ type ProductDraft = {
   nameZh: string
   sortOrder: string
   specs: ProductSpecDraft[]
-  tagsText: string
+  tagsTextEn: string
+  tagsTextRu: string
+  tagsTextUz: string
+  tagsTextZh: string
   variants: ProductVariantDraft[]
 }
 
@@ -255,7 +258,10 @@ function createEmptyDraft(sortOrder: number): ProductDraft {
     nameZh: '',
     sortOrder: String(sortOrder),
     specs: [],
-    tagsText: '',
+    tagsTextEn: '',
+    tagsTextRu: '',
+    tagsTextUz: '',
+    tagsTextZh: '',
     variants: [],
   }
 }
@@ -282,7 +288,10 @@ function productToDraft(product: Product): ProductDraft {
     nameZh: product.name.zh,
     sortOrder: String(product.sortOrder),
     specs: product.specs.map(specToDraft),
-    tagsText: product.tags.join(', '),
+    tagsTextEn: product.tags.en.join(', '),
+    tagsTextRu: product.tags.ru.join(', '),
+    tagsTextUz: product.tags.uz.join(', '),
+    tagsTextZh: product.tags.zh.join(', '),
     variants: product.variants.map(variantToDraft),
   }
 }
@@ -338,10 +347,12 @@ function draftToProduct(draft: ProductDraft): Product {
     },
     sortOrder: Number(draft.sortOrder) || 0,
     specs: draft.specs.map(draftSpecToSpec).filter((spec): spec is ProductSpec => Boolean(spec)),
-    tags: draft.tagsText
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean),
+    tags: {
+      en: draft.tagsTextEn.split(',').map((t) => t.trim()).filter(Boolean),
+      ru: draft.tagsTextRu.split(',').map((t) => t.trim()).filter(Boolean),
+      uz: draft.tagsTextUz.split(',').map((t) => t.trim()).filter(Boolean),
+      zh: draft.tagsTextZh.split(',').map((t) => t.trim()).filter(Boolean),
+    } satisfies LocalizedTags,
     variants,
   }
 }
@@ -418,7 +429,7 @@ export function AdminProductsPage() {
     const matchesQuery =
       !normalizedQuery ||
       product.name[language].toLowerCase().includes(normalizedQuery) ||
-      product.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+      [...product.tags.zh, ...product.tags.en, ...product.tags.ru, ...product.tags.uz].some((tag) => tag.toLowerCase().includes(normalizedQuery))
     const matchesCategory = categoryId === 'all' || product.categoryId === categoryId
     const matchesActiveStatus = activeStatus === 'all' || (activeStatus === 'active' ? product.isActive : !product.isActive)
     const matchesFeatured = !featuredOnly || product.isFeatured
@@ -533,6 +544,34 @@ export function AdminProductsPage() {
     const translated = await translationService.translateFromChinese(text)
     await wait(350)
     return translated
+  }
+
+  async function handleAutoFillTags() {
+    const sourceText = draft.tagsTextZh.trim()
+
+    if (!sourceText) {
+      setErrorMessage('请先填写中文标签。')
+      return
+    }
+
+    setAutoFillingModule('tags')
+    setErrorMessage('')
+    setStatusMessage('')
+
+    try {
+      const translated = await translateTextWithGap(sourceText)
+      setDraft((current) => ({
+        ...current,
+        tagsTextEn: current.tagsTextEn.trim() ? current.tagsTextEn : translated.en,
+        tagsTextRu: current.tagsTextRu.trim() ? current.tagsTextRu : translated.ru,
+        tagsTextUz: current.tagsTextUz.trim() ? current.tagsTextUz : translated.uz,
+      }))
+      setStatusMessage('已补齐标签的英文、俄文和乌兹语字段，请检查后保存。')
+    } catch (error) {
+      setErrorMessage(getAdminErrorMessage(error))
+    } finally {
+      setAutoFillingModule(null)
+    }
   }
 
   async function handleAutoFillBasicField(module: Extract<AutoFillModule, 'name' | 'description' | 'detail'>) {
@@ -1166,10 +1205,32 @@ export function AdminProductsPage() {
               <textarea onChange={(event) => updateDraft('descriptionUz', event.target.value)} rows={3} value={draft.descriptionUz} />
             </label>
           </div>
-          <div className="form-grid two-columns">
+          <div className="section-title-row inline-section-title">
+            <div>
+              <h3>商品标签</h3>
+              <small className="field-hint">用逗号分隔，先填中文标签，再点补齐。</small>
+            </div>
+            <button className="secondary-button" disabled={autoFillingModule !== null} onClick={() => void handleAutoFillTags()} type="button">
+              <Languages size={18} />
+              {autoFillingModule === 'tags' ? t('admin.autoFillingTranslations') : '补齐标签 EN/RU/UZ'}
+            </button>
+          </div>
+          <div className="form-grid language-columns">
             <label>
-              {t('admin.tags')}
-              <textarea onChange={(event) => updateDraft('tagsText', event.target.value)} rows={3} value={draft.tagsText} />
+              中文标签
+              <textarea onChange={(event) => updateDraft('tagsTextZh', event.target.value)} placeholder="用逗号分隔，如：工业地板, 防静电" rows={2} value={draft.tagsTextZh} />
+            </label>
+            <label>
+              英文标签
+              <textarea onChange={(event) => updateDraft('tagsTextEn', event.target.value)} placeholder="Comma-separated, e.g.: industrial, antistatic" rows={2} value={draft.tagsTextEn} />
+            </label>
+            <label>
+              俄文标签
+              <textarea onChange={(event) => updateDraft('tagsTextRu', event.target.value)} placeholder="Через запятую, напр.: промышленный" rows={2} value={draft.tagsTextRu} />
+            </label>
+            <label>
+              乌兹语标签
+              <textarea onChange={(event) => updateDraft('tagsTextUz', event.target.value)} placeholder="Vergul bilan, mas.: sanoat, antistatik" rows={2} value={draft.tagsTextUz} />
             </label>
           </div>
           <section className="spec-editor">

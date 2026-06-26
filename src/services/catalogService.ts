@@ -1,6 +1,6 @@
-﻿import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
+import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient'
 import { createLocalizedText } from '../types/language'
-import type { Category, Product, ProductSpec, ProductVariant } from '../types/product'
+import type { Category, LocalizedTags, Product, ProductSpec, ProductVariant } from '../types/product'
 
 type SupabaseCategoryRow = {
   id: string
@@ -50,6 +50,21 @@ async function loadMockData<T>(fileName: string): Promise<T> {
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function asProductTags(value: unknown): LocalizedTags {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>
+    return {
+      en: asStringArray(obj['en']),
+      ru: asStringArray(obj['ru']),
+      uz: asStringArray(obj['uz']),
+      zh: asStringArray(obj['zh']),
+    }
+  }
+
+  const legacy = asStringArray(value)
+  return { en: legacy, ru: legacy, uz: legacy, zh: legacy }
 }
 
 function resolveCoverImages(coverImages: unknown, coverImage?: string | null): string[] {
@@ -166,7 +181,7 @@ function mapProduct(row: SupabaseProductRow): Product {
     }),
     sortOrder: row.sort_order,
     specs: asProductSpecs(row.specs),
-    tags: asStringArray(row.tags),
+    tags: asProductTags(row.tags),
     variants: asProductVariants(row.variants),
   }
 }

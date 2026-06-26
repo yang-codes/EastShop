@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import type { SupportedLanguage } from '../types/language'
 
 const languages: Array<{ code: SupportedLanguage; label: string }> = [
+  { code: 'uz', label: 'UZ' },
   { code: 'zh', label: '中文' },
   { code: 'en', label: 'EN' },
   { code: 'ru', label: 'RU' },
-  { code: 'uz', label: 'UZ' },
 ]
 
 type LanguageSwitcherProps = {

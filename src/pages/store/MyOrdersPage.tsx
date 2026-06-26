@@ -33,7 +33,7 @@ export function MyOrdersPage() {
   const { i18n, t } = useTranslation()
   const language = resolveLanguage(i18n.language)
   const [phonePrefixes, setPhonePrefixes] = useState<PhonePrefixOption[]>(defaultPhonePrefixes)
-  const [phonePrefixId, setPhonePrefixId] = useState('cn')
+  const [phonePrefixId, setPhonePrefixId] = useState('uz')
   const [customPhonePrefix, setCustomPhonePrefix] = useState('+')
   const [phone, setPhone] = useState('')
   const [lookupMode, setLookupMode] = useState<LookupMode>('orderId')

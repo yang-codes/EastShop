@@ -1,4 +1,4 @@
-﻿const cartStorageKey = 'eastshop.cart'
+const cartStorageKey = 'eastshop.cart'
 
 export type CartLine = {
   productId: string
@@ -81,6 +81,7 @@ export const cartService = {
 
   saveCart(cart: CartLine[]) {
     setStoredCart(cart)
+    window.dispatchEvent(new Event('cart-updated'))
   },
 
   updateQuantity(productId: string, quantity: number, variantId?: string) {

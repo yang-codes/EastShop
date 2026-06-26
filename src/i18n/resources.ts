@@ -1,4 +1,4 @@
-const baseResources = {
+﻿const baseResources = {
   zh: {
     translation: {
       admin: {
@@ -44,6 +44,10 @@ const baseResources = {
         images: '详情页图片 URL 列表',
         imagesHint: '详情图上传后最大宽度 1000-1200 px，高度不限；每行一张，前台详情页按顺序纵向展示。',
         tags: '标签',
+        tagsZh: '中文标签',
+        tagsEn: '英文标签',
+        tagsRu: '俄文标签',
+        tagsUz: '乌兹语标签',
         featured: '推荐',
         delete: '删除',
         deleted: '已删除。',
@@ -313,6 +317,10 @@ const baseResources = {
         images: 'Detail image URLs',
         imagesHint: 'Detail images are capped at 1000-1200 px wide after upload, with unrestricted height. One URL per line; detail images render vertically in order.',
         tags: 'Tags',
+        tagsZh: 'Chinese Tags',
+        tagsEn: 'English Tags',
+        tagsRu: 'Russian Tags',
+        tagsUz: 'Uzbek Tags',
         featured: 'Featured',
         delete: 'Delete',
         deleted: 'Deleted.',
@@ -582,6 +590,10 @@ const baseResources = {
         images: 'URL изображений для карточки товара',
         imagesHint: 'Изображения деталей после загрузки ограничиваются шириной 1000-1200 px, высота без ограничений. Один URL в строке; изображения показываются вертикально по порядку.',
         tags: 'Теги',
+        tagsZh: 'Китайские теги',
+        tagsEn: 'Английские теги',
+        tagsRu: 'Русские теги',
+        tagsUz: 'Узбекские теги',
         featured: 'Рекомендуемый',
         delete: 'Удалить',
         deleted: 'Удалено.',

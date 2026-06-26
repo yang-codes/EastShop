@@ -7,6 +7,7 @@ declare module '*.yaml?raw' {
 
 declare global {
   interface Window {
+    __eastshopMainLoaded?: boolean
     Telegram?: {
       WebApp?: {
         initData: string

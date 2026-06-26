@@ -1,4 +1,4 @@
-﻿import { MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -78,7 +78,7 @@ export function CheckoutPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [name, setName] = useState('')
   const [phonePrefixes, setPhonePrefixes] = useState<PhonePrefixOption[]>(defaultPhonePrefixes)
-  const [phonePrefixId, setPhonePrefixId] = useState('cn')
+  const [phonePrefixId, setPhonePrefixId] = useState('uz')
   const [customPhonePrefix, setCustomPhonePrefix] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')

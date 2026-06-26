@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 import { LanguageSwitcher } from '../../components/LanguageSwitcher'
 import { detectEntrySource } from '../../lib/source'
+import { cartService } from '../../services/cartService'
 import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
 import { resolveSupportedLanguage } from '../../types/language'
 
@@ -12,6 +13,9 @@ export function StoreLayout() {
   const source = detectEntrySource()
   const language = resolveSupportedLanguage(i18n.language)
   const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null)
+  const [cartCount, setCartCount] = useState(() =>
+    cartService.getCart().reduce((sum, line) => sum + line.quantity, 0)
+  )
 
   useEffect(() => {
     let isMounted = true
@@ -28,6 +32,20 @@ export function StoreLayout() {
 
     return () => {
       isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    function syncCart() {
+      const count = cartService.getCart().reduce((sum, line) => sum + line.quantity, 0)
+      setCartCount(count)
+    }
+
+    window.addEventListener('cart-updated', syncCart)
+    window.addEventListener('storage', syncCart)
+    return () => {
+      window.removeEventListener('cart-updated', syncCart)
+      window.removeEventListener('storage', syncCart)
     }
   }, [])
 
@@ -49,6 +67,9 @@ export function StoreLayout() {
         </nav>
         <Link className="icon-link store-cart-link" to="/cart" aria-label={t('cart.title')}>
           <ShoppingCart size={18} />
+          {cartCount > 0 ? (
+            <span className="cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+          ) : null}
         </Link>
       </header>
       <main className="content">
@@ -57,3 +78,4 @@ export function StoreLayout() {
     </div>
   )
 }
+

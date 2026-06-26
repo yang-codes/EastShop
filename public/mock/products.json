@@ -1,221 +1,914 @@
 [
   {
     "id": "conductive-vinyl-roll",
-    "name": {"zh": "导电 PVC 卷材地板", "en": "Conductive PVC Vinyl Roll", "ru": "Проводящий ПВХ рулонный пол"},
-    "description": {"zh": "适合电子装配线、实验室和服务器机房的连续铺装地材。", "en": "Continuous flooring for electronics lines, labs, and server rooms.", "ru": "Рулонное покрытие для электроники, лабораторий и серверных."},
-    "detail": {"zh": "卷材接缝少，易清洁，建议配合导电胶、铜箔和接地系统施工。", "en": "Fewer seams, easy cleaning, and recommended with conductive adhesive, copper tape, and grounding.", "ru": "Меньше швов, простая уборка, рекомендуется монтаж с проводящим клеем, медной лентой и заземлением."},
+    "name": {
+      "zh": "导电 PVC 卷材地板",
+      "en": "Conductive PVC Vinyl Roll",
+      "ru": "Проводящий ПВХ рулонный пол"
+    },
+    "description": {
+      "zh": "适合电子装配线、实验室和服务器机房的连续铺装地材。",
+      "en": "Continuous flooring for electronics lines, labs, and server rooms.",
+      "ru": "Рулонное покрытие для электроники, лабораторий и серверных."
+    },
+    "detail": {
+      "zh": "卷材接缝少，易清洁，建议配合导电胶、铜箔和接地系统施工。",
+      "en": "Fewer seams, easy cleaning, and recommended with conductive adhesive, copper tape, and grounding.",
+      "ru": "Меньше швов, простая уборка, рекомендуется монтаж с проводящим клеем, медной лентой и заземлением."
+    },
     "categoryId": "11111111-1111-4111-8111-111111111111",
-    "coverImage": "/mock/images/esd-floor-tile.svg",
-    "coverImages": ["/mock/images/esd-floor-tile.svg"],
-    "images": ["/mock/images/esd-floor-tile.svg"],
+    "coverImage": "/mock/product-images/conductive-vinyl-roll/cover.svg",
+    "coverImages": [
+      "/mock/product-images/conductive-vinyl-roll/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/conductive-vinyl-roll/detail-1.svg",
+      "/mock/product-images/conductive-vinyl-roll/detail-2.svg"
+    ],
     "specs": [
-      {"id":"thickness","label":{"zh":"厚度","en":"Thickness","ru":"Толщина"},"value":{"zh":"2.0 mm","en":"2.0 mm","ru":"2.0 мм"}},
-      {"id":"width","label":{"zh":"卷宽","en":"Roll width","ru":"Ширина рулона"},"value":{"zh":"2 m","en":"2 m","ru":"2 м"}}
+      {
+        "id": "thickness",
+        "label": {
+          "zh": "厚度",
+          "en": "Thickness",
+          "ru": "Толщина"
+        },
+        "value": {
+          "zh": "2.0 mm",
+          "en": "2.0 mm",
+          "ru": "2.0 мм"
+        }
+      },
+      {
+        "id": "width",
+        "label": {
+          "zh": "卷宽",
+          "en": "Roll width",
+          "ru": "Ширина рулона"
+        },
+        "value": {
+          "zh": "2 m",
+          "en": "2 m",
+          "ru": "2 м"
+        }
+      }
     ],
     "variants": [
-      {"id":"10m","name":{"zh":"10 米/卷","en":"10 m roll","ru":"10 м/рулон"},"price":126,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"CVR-10M"},
-      {"id":"20m","name":{"zh":"20 米/卷","en":"20 m roll","ru":"20 м/рулон"},"price":238,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"CVR-20M"}
+      {
+        "id": "10m",
+        "name": {
+          "zh": "10 米/卷",
+          "en": "10 m roll",
+          "ru": "10 м/рулон"
+        },
+        "price": 126,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "CVR-10M"
+      },
+      {
+        "id": "20m",
+        "name": {
+          "zh": "20 米/卷",
+          "en": "20 m roll",
+          "ru": "20 м/рулон"
+        },
+        "price": 238,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "CVR-20M"
+      }
     ],
-    "tags": ["ESD", "PVC", "roll"],
+    "tags": [
+      "ESD",
+      "PVC",
+      "roll"
+    ],
     "sortOrder": 1,
     "isFeatured": true,
     "isActive": true
   },
   {
     "id": "raised-access-floor-panel",
-    "name": {"zh": "全钢防静电活动地板", "en": "Steel Raised Access Floor Panel", "ru": "Стальная антистатическая фальшпанель"},
-    "description": {"zh": "适合数据中心、弱电机房和洁净控制室的架空地板。", "en": "Raised floor panel for data centers, equipment rooms, and clean control rooms.", "ru": "Фальшпол для дата-центров, аппаратных и чистых помещений."},
-    "detail": {"zh": "钢板结构承载稳定，表面耐磨，便于布线、检修和后期维护。", "en": "Stable steel structure with wear-resistant finish for cabling, inspection, and maintenance.", "ru": "Прочная стальная конструкция с износостойкой поверхностью для кабелей и обслуживания."},
+    "name": {
+      "zh": "全钢防静电活动地板",
+      "en": "Steel Raised Access Floor Panel",
+      "ru": "Стальная антистатическая фальшпанель"
+    },
+    "description": {
+      "zh": "适合数据中心、弱电机房和洁净控制室的架空地板。",
+      "en": "Raised floor panel for data centers, equipment rooms, and clean control rooms.",
+      "ru": "Фальшпол для дата-центров, аппаратных и чистых помещений."
+    },
+    "detail": {
+      "zh": "钢板结构承载稳定，表面耐磨，便于布线、检修和后期维护。",
+      "en": "Stable steel structure with wear-resistant finish for cabling, inspection, and maintenance.",
+      "ru": "Прочная стальная конструкция с износостойкой поверхностью для кабелей и обслуживания."
+    },
     "categoryId": "11111111-1111-4111-8111-111111111111",
-    "coverImage": "/mock/images/esd-floor-tile.svg",
-    "coverImages": ["/mock/images/esd-floor-tile.svg"],
-    "images": ["/mock/images/esd-floor-tile.svg"],
+    "coverImage": "/mock/product-images/raised-access-floor-panel/cover.svg",
+    "coverImages": [
+      "/mock/product-images/raised-access-floor-panel/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/raised-access-floor-panel/detail-1.svg",
+      "/mock/product-images/raised-access-floor-panel/detail-2.svg"
+    ],
     "specs": [
-      {"id":"size","label":{"zh":"尺寸","en":"Size","ru":"Размер"},"value":{"zh":"600 x 600 mm","en":"600 x 600 mm","ru":"600 x 600 мм"}},
-      {"id":"load","label":{"zh":"集中载荷","en":"Concentrated load","ru":"Сосредоточенная нагрузка"},"value":{"zh":"4450 N","en":"4450 N","ru":"4450 Н"}}
+      {
+        "id": "size",
+        "label": {
+          "zh": "尺寸",
+          "en": "Size",
+          "ru": "Размер"
+        },
+        "value": {
+          "zh": "600 x 600 mm",
+          "en": "600 x 600 mm",
+          "ru": "600 x 600 мм"
+        }
+      },
+      {
+        "id": "load",
+        "label": {
+          "zh": "集中载荷",
+          "en": "Concentrated load",
+          "ru": "Сосредоточенная нагрузка"
+        },
+        "value": {
+          "zh": "4450 N",
+          "en": "4450 N",
+          "ru": "4450 Н"
+        }
+      }
     ],
     "variants": [
-      {"id":"bare","name":{"zh":"裸板","en":"Bare panel","ru":"Панель без покрытия"},"price":18.6,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"RAF-BARE"},
-      {"id":"hpl","name":{"zh":"HPL 面层","en":"HPL finish","ru":"HPL покрытие"},"price":24.8,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"RAF-HPL"}
+      {
+        "id": "bare",
+        "name": {
+          "zh": "裸板",
+          "en": "Bare panel",
+          "ru": "Панель без покрытия"
+        },
+        "price": 18.6,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "RAF-BARE"
+      },
+      {
+        "id": "hpl",
+        "name": {
+          "zh": "HPL 面层",
+          "en": "HPL finish",
+          "ru": "HPL покрытие"
+        },
+        "price": 24.8,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "RAF-HPL"
+      }
     ],
-    "tags": ["raised floor", "data center"],
+    "tags": [
+      "raised floor",
+      "data center"
+    ],
     "sortOrder": 2,
     "isFeatured": true,
     "isActive": true
   },
   {
     "id": "epoxy-primer-set",
-    "name": {"zh": "环氧地坪底涂套装", "en": "Epoxy Floor Primer Set", "ru": "Комплект эпоксидной грунтовки"},
-    "description": {"zh": "用于混凝土地面封闭和增强附着力的双组份底涂。", "en": "Two-component primer for sealing concrete floors and improving adhesion.", "ru": "Двухкомпонентная грунтовка для бетона и улучшения адгезии."},
-    "detail": {"zh": "适合防静电地坪、耐磨地坪和车间翻新项目，施工前需清理浮灰和油污。", "en": "Suitable for ESD floors, wear-resistant floors, and workshop renovation. Clean dust and oil before use.", "ru": "Подходит для антистатических и износостойких полов, а также ремонта цехов."},
+    "name": {
+      "zh": "环氧地坪底涂套装",
+      "en": "Epoxy Floor Primer Set",
+      "ru": "Комплект эпоксидной грунтовки"
+    },
+    "description": {
+      "zh": "用于混凝土地面封闭和增强附着力的双组份底涂。",
+      "en": "Two-component primer for sealing concrete floors and improving adhesion.",
+      "ru": "Двухкомпонентная грунтовка для бетона и улучшения адгезии."
+    },
+    "detail": {
+      "zh": "适合防静电地坪、耐磨地坪和车间翻新项目，施工前需清理浮灰和油污。",
+      "en": "Suitable for ESD floors, wear-resistant floors, and workshop renovation. Clean dust and oil before use.",
+      "ru": "Подходит для антистатических и износостойких полов, а также ремонта цехов."
+    },
     "categoryId": "11111111-1111-4111-8111-111111111111",
-    "coverImage": "/mock/images/epoxy-floor-kit.svg",
-    "coverImages": ["/mock/images/epoxy-floor-kit.svg"],
-    "images": ["/mock/images/epoxy-floor-kit.svg"],
+    "coverImage": "/mock/product-images/epoxy-primer-set/cover.svg",
+    "coverImages": [
+      "/mock/product-images/epoxy-primer-set/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/epoxy-primer-set/detail-1.svg",
+      "/mock/product-images/epoxy-primer-set/detail-2.svg"
+    ],
     "specs": [
-      {"id":"coverage","label":{"zh":"覆盖面积","en":"Coverage","ru":"Покрытие"},"value":{"zh":"30-40 平方米/套","en":"30-40 m2/set","ru":"30-40 м2/комплект"}},
-      {"id":"mix","label":{"zh":"配比","en":"Mix ratio","ru":"Соотношение"},"value":{"zh":"A:B = 2:1","en":"A:B = 2:1","ru":"A:B = 2:1"}}
+      {
+        "id": "coverage",
+        "label": {
+          "zh": "覆盖面积",
+          "en": "Coverage",
+          "ru": "Покрытие"
+        },
+        "value": {
+          "zh": "30-40 平方米/套",
+          "en": "30-40 m2/set",
+          "ru": "30-40 м2/комплект"
+        }
+      },
+      {
+        "id": "mix",
+        "label": {
+          "zh": "配比",
+          "en": "Mix ratio",
+          "ru": "Соотношение"
+        },
+        "value": {
+          "zh": "A:B = 2:1",
+          "en": "A:B = 2:1",
+          "ru": "A:B = 2:1"
+        }
+      }
     ],
     "variants": [
-      {"id":"standard","name":{"zh":"标准型","en":"Standard","ru":"Стандарт"},"price":42,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"EPS-STD"},
-      {"id":"fast-dry","name":{"zh":"快干型","en":"Fast dry","ru":"Быстросохнущий"},"price":49,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"EPS-FD"}
+      {
+        "id": "standard",
+        "name": {
+          "zh": "标准型",
+          "en": "Standard",
+          "ru": "Стандарт"
+        },
+        "price": 42,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "EPS-STD"
+      },
+      {
+        "id": "fast-dry",
+        "name": {
+          "zh": "快干型",
+          "en": "Fast dry",
+          "ru": "Быстросохнущий"
+        },
+        "price": 49,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "EPS-FD"
+      }
     ],
-    "tags": ["epoxy", "primer"],
+    "tags": [
+      "epoxy",
+      "primer"
+    ],
     "sortOrder": 3,
     "isFeatured": false,
     "isActive": true
   },
   {
     "id": "anti-static-wrist-strap",
-    "name": {"zh": "防静电腕带套装", "en": "Anti-static Wrist Strap Kit", "ru": "Комплект антистатического браслета"},
-    "description": {"zh": "用于电子维修、装配和检测工位的人体静电释放。", "en": "Personal grounding kit for electronics repair, assembly, and inspection stations.", "ru": "Заземляющий комплект для ремонта, сборки и контроля электроники."},
-    "detail": {"zh": "腕带柔软可调，配鳄鱼夹和接地线，适合产线人员日常佩戴。", "en": "Adjustable soft wrist strap with alligator clip and grounding cord for daily production use.", "ru": "Регулируемый браслет с зажимом и проводом заземления для производства."},
+    "name": {
+      "zh": "防静电腕带套装",
+      "en": "Anti-static Wrist Strap Kit",
+      "ru": "Комплект антистатического браслета"
+    },
+    "description": {
+      "zh": "用于电子维修、装配和检测工位的人体静电释放。",
+      "en": "Personal grounding kit for electronics repair, assembly, and inspection stations.",
+      "ru": "Заземляющий комплект для ремонта, сборки и контроля электроники."
+    },
+    "detail": {
+      "zh": "腕带柔软可调，配鳄鱼夹和接地线，适合产线人员日常佩戴。",
+      "en": "Adjustable soft wrist strap with alligator clip and grounding cord for daily production use.",
+      "ru": "Регулируемый браслет с зажимом и проводом заземления для производства."
+    },
     "categoryId": "22222222-2222-4222-8222-222222222222",
-    "coverImage": "/mock/images/insulated-gloves.svg",
-    "coverImages": ["/mock/images/insulated-gloves.svg"],
-    "images": ["/mock/images/insulated-gloves.svg"],
+    "coverImage": "/mock/product-images/anti-static-wrist-strap/cover.svg",
+    "coverImages": [
+      "/mock/product-images/anti-static-wrist-strap/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/anti-static-wrist-strap/detail-1.svg",
+      "/mock/product-images/anti-static-wrist-strap/detail-2.svg"
+    ],
     "specs": [
-      {"id":"cord","label":{"zh":"线长","en":"Cord length","ru":"Длина кабеля"},"value":{"zh":"1.8 m","en":"1.8 m","ru":"1.8 м"}},
-      {"id":"resistance","label":{"zh":"保护电阻","en":"Safety resistor","ru":"Защитный резистор"},"value":{"zh":"1 MΩ","en":"1 Mohm","ru":"1 МОм"}}
+      {
+        "id": "cord",
+        "label": {
+          "zh": "线长",
+          "en": "Cord length",
+          "ru": "Длина кабеля"
+        },
+        "value": {
+          "zh": "1.8 m",
+          "en": "1.8 m",
+          "ru": "1.8 м"
+        }
+      },
+      {
+        "id": "resistance",
+        "label": {
+          "zh": "保护电阻",
+          "en": "Safety resistor",
+          "ru": "Защитный резистор"
+        },
+        "value": {
+          "zh": "1 MΩ",
+          "en": "1 Mohm",
+          "ru": "1 МОм"
+        }
+      }
     ],
     "variants": [
-      {"id":"single","name":{"zh":"单人套装","en":"Single kit","ru":"Один комплект"},"price":2.9,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"AWS-1"},
-      {"id":"pack10","name":{"zh":"10 套装","en":"Pack of 10","ru":"10 комплектов"},"price":24,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"AWS-10"}
+      {
+        "id": "single",
+        "name": {
+          "zh": "单人套装",
+          "en": "Single kit",
+          "ru": "Один комплект"
+        },
+        "price": 2.9,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "AWS-1"
+      },
+      {
+        "id": "pack10",
+        "name": {
+          "zh": "10 套装",
+          "en": "Pack of 10",
+          "ru": "10 комплектов"
+        },
+        "price": 24,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "AWS-10"
+      }
     ],
-    "tags": ["ESD", "wrist strap"],
+    "tags": [
+      "ESD",
+      "wrist strap"
+    ],
     "sortOrder": 4,
     "isFeatured": true,
     "isActive": true
   },
   {
     "id": "nitrile-coated-gloves",
-    "name": {"zh": "丁腈涂层防滑手套", "en": "Nitrile Coated Grip Gloves", "ru": "Перчатки с нитриловым покрытием"},
-    "description": {"zh": "适合仓库拣货、设备装配和轻型搬运的耐磨手套。", "en": "Durable grip gloves for warehouse picking, equipment assembly, and light handling.", "ru": "Износостойкие перчатки для склада, сборки и легких работ."},
-    "detail": {"zh": "掌面丁腈涂层提升抓握力，透气针织手背适合长时间佩戴。", "en": "Nitrile palm coating improves grip, while breathable knit backing supports long wear.", "ru": "Нитриловое покрытие улучшает захват, дышащая основа удобна для долгой работы."},
+    "name": {
+      "zh": "丁腈涂层防滑手套",
+      "en": "Nitrile Coated Grip Gloves",
+      "ru": "Перчатки с нитриловым покрытием"
+    },
+    "description": {
+      "zh": "适合仓库拣货、设备装配和轻型搬运的耐磨手套。",
+      "en": "Durable grip gloves for warehouse picking, equipment assembly, and light handling.",
+      "ru": "Износостойкие перчатки для склада, сборки и легких работ."
+    },
+    "detail": {
+      "zh": "掌面丁腈涂层提升抓握力，透气针织手背适合长时间佩戴。",
+      "en": "Nitrile palm coating improves grip, while breathable knit backing supports long wear.",
+      "ru": "Нитриловое покрытие улучшает захват, дышащая основа удобна для долгой работы."
+    },
     "categoryId": "22222222-2222-4222-8222-222222222222",
-    "coverImage": "/mock/images/insulated-gloves.svg",
-    "coverImages": ["/mock/images/insulated-gloves.svg"],
-    "images": ["/mock/images/insulated-gloves.svg"],
+    "coverImage": "/mock/product-images/nitrile-coated-gloves/cover.svg",
+    "coverImages": [
+      "/mock/product-images/nitrile-coated-gloves/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/nitrile-coated-gloves/detail-1.svg",
+      "/mock/product-images/nitrile-coated-gloves/detail-2.svg"
+    ],
     "specs": [
-      {"id":"sizes","label":{"zh":"尺码","en":"Sizes","ru":"Размеры"},"value":{"zh":"M / L / XL","en":"M / L / XL","ru":"M / L / XL"}},
-      {"id":"package","label":{"zh":"包装","en":"Package","ru":"Упаковка"},"value":{"zh":"12 双/包","en":"12 pairs/bag","ru":"12 пар/пакет"}}
+      {
+        "id": "sizes",
+        "label": {
+          "zh": "尺码",
+          "en": "Sizes",
+          "ru": "Размеры"
+        },
+        "value": {
+          "zh": "M / L / XL",
+          "en": "M / L / XL",
+          "ru": "M / L / XL"
+        }
+      },
+      {
+        "id": "package",
+        "label": {
+          "zh": "包装",
+          "en": "Package",
+          "ru": "Упаковка"
+        },
+        "value": {
+          "zh": "12 双/包",
+          "en": "12 pairs/bag",
+          "ru": "12 пар/пакет"
+        }
+      }
     ],
     "variants": [
-      {"id":"m","name":{"zh":"M 码","en":"Size M","ru":"Размер M"},"price":5.8,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"NCG-M"},
-      {"id":"l","name":{"zh":"L 码","en":"Size L","ru":"Размер L"},"price":5.8,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"NCG-L"},
-      {"id":"xl","name":{"zh":"XL 码","en":"Size XL","ru":"Размер XL"},"price":6.2,"sortOrder":3,"isDefault":false,"isActive":true,"sku":"NCG-XL"}
+      {
+        "id": "m",
+        "name": {
+          "zh": "M 码",
+          "en": "Size M",
+          "ru": "Размер M"
+        },
+        "price": 5.8,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "NCG-M"
+      },
+      {
+        "id": "l",
+        "name": {
+          "zh": "L 码",
+          "en": "Size L",
+          "ru": "Размер L"
+        },
+        "price": 5.8,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "NCG-L"
+      },
+      {
+        "id": "xl",
+        "name": {
+          "zh": "XL 码",
+          "en": "Size XL",
+          "ru": "Размер XL"
+        },
+        "price": 6.2,
+        "sortOrder": 3,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "NCG-XL"
+      }
     ],
-    "tags": ["gloves", "PPE"],
+    "tags": [
+      "gloves",
+      "PPE"
+    ],
     "sortOrder": 5,
     "isFeatured": false,
     "isActive": true
   },
   {
     "id": "safety-face-shield",
-    "name": {"zh": "透明防护面屏", "en": "Clear Safety Face Shield", "ru": "Прозрачный защитный щиток"},
-    "description": {"zh": "适合打磨、切割、喷溅防护和日常巡检。", "en": "Face protection for grinding, cutting, splash protection, and daily inspection.", "ru": "Защита лица при шлифовке, резке, брызгах и ежедневных проверках."},
-    "detail": {"zh": "大视野透明面屏，头箍可调，可与口罩和护目镜组合使用。", "en": "Wide clear visor with adjustable headband, compatible with masks and safety goggles.", "ru": "Широкий прозрачный экран с регулируемым оголовьем, совместим с масками и очками."},
+    "name": {
+      "zh": "透明防护面屏",
+      "en": "Clear Safety Face Shield",
+      "ru": "Прозрачный защитный щиток"
+    },
+    "description": {
+      "zh": "适合打磨、切割、喷溅防护和日常巡检。",
+      "en": "Face protection for grinding, cutting, splash protection, and daily inspection.",
+      "ru": "Защита лица при шлифовке, резке, брызгах и ежедневных проверках."
+    },
+    "detail": {
+      "zh": "大视野透明面屏，头箍可调，可与口罩和护目镜组合使用。",
+      "en": "Wide clear visor with adjustable headband, compatible with masks and safety goggles.",
+      "ru": "Широкий прозрачный экран с регулируемым оголовьем, совместим с масками и очками."
+    },
     "categoryId": "22222222-2222-4222-8222-222222222222",
-    "coverImage": "/mock/images/insulated-gloves.svg",
-    "coverImages": ["/mock/images/insulated-gloves.svg"],
-    "images": ["/mock/images/insulated-gloves.svg"],
+    "coverImage": "/mock/product-images/safety-face-shield/cover.svg",
+    "coverImages": [
+      "/mock/product-images/safety-face-shield/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/safety-face-shield/detail-1.svg",
+      "/mock/product-images/safety-face-shield/detail-2.svg"
+    ],
     "specs": [
-      {"id":"material","label":{"zh":"材质","en":"Material","ru":"Материал"},"value":{"zh":"PET","en":"PET","ru":"PET"}},
-      {"id":"thickness","label":{"zh":"面屏厚度","en":"Visor thickness","ru":"Толщина экрана"},"value":{"zh":"0.5 mm","en":"0.5 mm","ru":"0.5 мм"}}
+      {
+        "id": "material",
+        "label": {
+          "zh": "材质",
+          "en": "Material",
+          "ru": "Материал"
+        },
+        "value": {
+          "zh": "PET",
+          "en": "PET",
+          "ru": "PET"
+        }
+      },
+      {
+        "id": "thickness",
+        "label": {
+          "zh": "面屏厚度",
+          "en": "Visor thickness",
+          "ru": "Толщина экрана"
+        },
+        "value": {
+          "zh": "0.5 mm",
+          "en": "0.5 mm",
+          "ru": "0.5 мм"
+        }
+      }
     ],
     "variants": [
-      {"id":"single","name":{"zh":"单个装","en":"Single piece","ru":"1 шт"},"price":3.5,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"SFS-1"},
-      {"id":"box20","name":{"zh":"20 个/箱","en":"20 pcs/box","ru":"20 шт/коробка"},"price":58,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"SFS-20"}
+      {
+        "id": "single",
+        "name": {
+          "zh": "单个装",
+          "en": "Single piece",
+          "ru": "1 шт"
+        },
+        "price": 3.5,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "SFS-1"
+      },
+      {
+        "id": "box20",
+        "name": {
+          "zh": "20 个/箱",
+          "en": "20 pcs/box",
+          "ru": "20 шт/коробка"
+        },
+        "price": 58,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "SFS-20"
+      }
     ],
-    "tags": ["face shield", "safety"],
+    "tags": [
+      "face shield",
+      "safety"
+    ],
     "sortOrder": 6,
     "isFeatured": false,
     "isActive": true
   },
   {
     "id": "foldable-platform-cart",
-    "name": {"zh": "折叠式静音平板车", "en": "Folding Silent Platform Cart", "ru": "Складная бесшумная платформенная тележка"},
-    "description": {"zh": "适合仓库、门店和办公室搬运箱包物料。", "en": "Platform cart for moving boxes and supplies in warehouses, shops, and offices.", "ru": "Тележка для коробок и материалов на складе, в магазине и офисе."},
-    "detail": {"zh": "折叠扶手节省空间，静音轮减少地面噪音，适合频繁周转。", "en": "Foldable handle saves space and quiet wheels reduce noise during frequent handling.", "ru": "Складная ручка экономит место, тихие колеса снижают шум при перевозке."},
+    "name": {
+      "zh": "折叠式静音平板车",
+      "en": "Folding Silent Platform Cart",
+      "ru": "Складная бесшумная платформенная тележка"
+    },
+    "description": {
+      "zh": "适合仓库、门店和办公室搬运箱包物料。",
+      "en": "Platform cart for moving boxes and supplies in warehouses, shops, and offices.",
+      "ru": "Тележка для коробок и материалов на складе, в магазине и офисе."
+    },
+    "detail": {
+      "zh": "折叠扶手节省空间，静音轮减少地面噪音，适合频繁周转。",
+      "en": "Foldable handle saves space and quiet wheels reduce noise during frequent handling.",
+      "ru": "Складная ручка экономит место, тихие колеса снижают шум при перевозке."
+    },
     "categoryId": "33333333-3333-4333-8333-333333333333",
-    "coverImage": "/mock/images/storage-bin.svg",
-    "coverImages": ["/mock/images/storage-bin.svg"],
-    "images": ["/mock/images/storage-bin.svg"],
+    "coverImage": "/mock/product-images/foldable-platform-cart/cover.svg",
+    "coverImages": [
+      "/mock/product-images/foldable-platform-cart/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/foldable-platform-cart/detail-1.svg",
+      "/mock/product-images/foldable-platform-cart/detail-2.svg"
+    ],
     "specs": [
-      {"id":"platform","label":{"zh":"台面尺寸","en":"Platform size","ru":"Размер платформы"},"value":{"zh":"720 x 480 mm","en":"720 x 480 mm","ru":"720 x 480 мм"}},
-      {"id":"load","label":{"zh":"载重","en":"Load capacity","ru":"Грузоподъемность"},"value":{"zh":"150 kg","en":"150 kg","ru":"150 кг"}}
+      {
+        "id": "platform",
+        "label": {
+          "zh": "台面尺寸",
+          "en": "Platform size",
+          "ru": "Размер платформы"
+        },
+        "value": {
+          "zh": "720 x 480 mm",
+          "en": "720 x 480 mm",
+          "ru": "720 x 480 мм"
+        }
+      },
+      {
+        "id": "load",
+        "label": {
+          "zh": "载重",
+          "en": "Load capacity",
+          "ru": "Грузоподъемность"
+        },
+        "value": {
+          "zh": "150 kg",
+          "en": "150 kg",
+          "ru": "150 кг"
+        }
+      }
     ],
     "variants": [
-      {"id":"150kg","name":{"zh":"150kg 标准款","en":"150kg standard","ru":"150 кг стандарт"},"price":36,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"FPC-150"},
-      {"id":"300kg","name":{"zh":"300kg 加强款","en":"300kg heavy duty","ru":"300 кг усиленная"},"price":62,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"FPC-300"}
+      {
+        "id": "150kg",
+        "name": {
+          "zh": "150kg 标准款",
+          "en": "150kg standard",
+          "ru": "150 кг стандарт"
+        },
+        "price": 36,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "FPC-150"
+      },
+      {
+        "id": "300kg",
+        "name": {
+          "zh": "300kg 加强款",
+          "en": "300kg heavy duty",
+          "ru": "300 кг усиленная"
+        },
+        "price": 62,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "FPC-300"
+      }
     ],
-    "tags": ["cart", "warehouse"],
+    "tags": [
+      "cart",
+      "warehouse"
+    ],
     "sortOrder": 7,
     "isFeatured": true,
     "isActive": true
   },
   {
     "id": "stacking-parts-crate",
-    "name": {"zh": "加厚可堆叠零件箱", "en": "Heavy-duty Stackable Parts Crate", "ru": "Усиленный штабелируемый ящик"},
-    "description": {"zh": "用于五金件、电子料和维修备件分类收纳。", "en": "Storage crate for hardware, electronic parts, and maintenance spares.", "ru": "Ящик для метизов, электронных деталей и запасных частей."},
-    "detail": {"zh": "前开口方便拿取，支持多色分类，适合货架和工位使用。", "en": "Front opening supports quick access and color-coded sorting for shelves and workstations.", "ru": "Передний доступ и цветовая сортировка для стеллажей и рабочих мест."},
+    "name": {
+      "zh": "加厚可堆叠零件箱",
+      "en": "Heavy-duty Stackable Parts Crate",
+      "ru": "Усиленный штабелируемый ящик"
+    },
+    "description": {
+      "zh": "用于五金件、电子料和维修备件分类收纳。",
+      "en": "Storage crate for hardware, electronic parts, and maintenance spares.",
+      "ru": "Ящик для метизов, электронных деталей и запасных частей."
+    },
+    "detail": {
+      "zh": "前开口方便拿取，支持多色分类，适合货架和工位使用。",
+      "en": "Front opening supports quick access and color-coded sorting for shelves and workstations.",
+      "ru": "Передний доступ и цветовая сортировка для стеллажей и рабочих мест."
+    },
     "categoryId": "33333333-3333-4333-8333-333333333333",
-    "coverImage": "/mock/images/storage-bin.svg",
-    "coverImages": ["/mock/images/storage-bin.svg"],
-    "images": ["/mock/images/storage-bin.svg"],
+    "coverImage": "/mock/product-images/stacking-parts-crate/cover.svg",
+    "coverImages": [
+      "/mock/product-images/stacking-parts-crate/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/stacking-parts-crate/detail-1.svg",
+      "/mock/product-images/stacking-parts-crate/detail-2.svg"
+    ],
     "specs": [
-      {"id":"size","label":{"zh":"尺寸","en":"Size","ru":"Размер"},"value":{"zh":"350 x 220 x 160 mm","en":"350 x 220 x 160 mm","ru":"350 x 220 x 160 мм"}},
-      {"id":"material","label":{"zh":"材质","en":"Material","ru":"Материал"},"value":{"zh":"PP","en":"PP","ru":"PP"}}
+      {
+        "id": "size",
+        "label": {
+          "zh": "尺寸",
+          "en": "Size",
+          "ru": "Размер"
+        },
+        "value": {
+          "zh": "350 x 220 x 160 mm",
+          "en": "350 x 220 x 160 mm",
+          "ru": "350 x 220 x 160 мм"
+        }
+      },
+      {
+        "id": "material",
+        "label": {
+          "zh": "材质",
+          "en": "Material",
+          "ru": "Материал"
+        },
+        "value": {
+          "zh": "PP",
+          "en": "PP",
+          "ru": "PP"
+        }
+      }
     ],
     "variants": [
-      {"id":"blue","name":{"zh":"蓝色","en":"Blue","ru":"Синий"},"price":4.2,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"SPC-BL"},
-      {"id":"yellow","name":{"zh":"黄色","en":"Yellow","ru":"Желтый"},"price":4.2,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"SPC-YE"}
+      {
+        "id": "blue",
+        "name": {
+          "zh": "蓝色",
+          "en": "Blue",
+          "ru": "Синий"
+        },
+        "price": 4.2,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "SPC-BL"
+      },
+      {
+        "id": "yellow",
+        "name": {
+          "zh": "黄色",
+          "en": "Yellow",
+          "ru": "Желтый"
+        },
+        "price": 4.2,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "SPC-YE"
+      }
     ],
-    "tags": ["storage", "crate"],
+    "tags": [
+      "storage",
+      "crate"
+    ],
     "sortOrder": 8,
     "isFeatured": false,
     "isActive": true
   },
   {
     "id": "magnetic-led-inspection-light",
-    "name": {"zh": "磁吸式 LED 检修灯", "en": "Magnetic LED Inspection Light", "ru": "Магнитный LED инспекционный фонарь"},
-    "description": {"zh": "适合设备检修、夜间巡检和临时照明。", "en": "Portable light for equipment repair, night inspection, and temporary lighting.", "ru": "Переносной фонарь для ремонта оборудования, ночного осмотра и временного освещения."},
-    "detail": {"zh": "底部磁吸可固定在金属表面，支持 USB 充电和多角度调节。", "en": "Magnetic base attaches to metal surfaces, with USB charging and multi-angle adjustment.", "ru": "Магнитное основание крепится к металлу, USB зарядка и регулировка угла."},
+    "name": {
+      "zh": "磁吸式 LED 检修灯",
+      "en": "Magnetic LED Inspection Light",
+      "ru": "Магнитный LED инспекционный фонарь"
+    },
+    "description": {
+      "zh": "适合设备检修、夜间巡检和临时照明。",
+      "en": "Portable light for equipment repair, night inspection, and temporary lighting.",
+      "ru": "Переносной фонарь для ремонта оборудования, ночного осмотра и временного освещения."
+    },
+    "detail": {
+      "zh": "底部磁吸可固定在金属表面，支持 USB 充电和多角度调节。",
+      "en": "Magnetic base attaches to metal surfaces, with USB charging and multi-angle adjustment.",
+      "ru": "Магнитное основание крепится к металлу, USB зарядка и регулировка угла."
+    },
     "categoryId": "33333333-3333-4333-8333-333333333333",
-    "coverImage": "/mock/images/led-work-light.svg",
-    "coverImages": ["/mock/images/led-work-light.svg"],
-    "images": ["/mock/images/led-work-light.svg"],
+    "coverImage": "/mock/product-images/magnetic-led-inspection-light/cover.svg",
+    "coverImages": [
+      "/mock/product-images/magnetic-led-inspection-light/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/magnetic-led-inspection-light/detail-1.svg",
+      "/mock/product-images/magnetic-led-inspection-light/detail-2.svg"
+    ],
     "specs": [
-      {"id":"brightness","label":{"zh":"亮度","en":"Brightness","ru":"Яркость"},"value":{"zh":"800 lm","en":"800 lm","ru":"800 лм"}},
-      {"id":"runtime","label":{"zh":"续航","en":"Runtime","ru":"Время работы"},"value":{"zh":"4-6 h","en":"4-6 h","ru":"4-6 ч"}}
+      {
+        "id": "brightness",
+        "label": {
+          "zh": "亮度",
+          "en": "Brightness",
+          "ru": "Яркость"
+        },
+        "value": {
+          "zh": "800 lm",
+          "en": "800 lm",
+          "ru": "800 лм"
+        }
+      },
+      {
+        "id": "runtime",
+        "label": {
+          "zh": "续航",
+          "en": "Runtime",
+          "ru": "Время работы"
+        },
+        "value": {
+          "zh": "4-6 h",
+          "en": "4-6 h",
+          "ru": "4-6 ч"
+        }
+      }
     ],
     "variants": [
-      {"id":"single","name":{"zh":"单灯","en":"Single light","ru":"Один фонарь"},"price":13.5,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"MIL-1"},
-      {"id":"kit","name":{"zh":"双灯套装","en":"Two-light kit","ru":"Комплект из 2"},"price":24.6,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"MIL-2"}
+      {
+        "id": "single",
+        "name": {
+          "zh": "单灯",
+          "en": "Single light",
+          "ru": "Один фонарь"
+        },
+        "price": 13.5,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "MIL-1"
+      },
+      {
+        "id": "kit",
+        "name": {
+          "zh": "双灯套装",
+          "en": "Two-light kit",
+          "ru": "Комплект из 2"
+        },
+        "price": 24.6,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "MIL-2"
+      }
     ],
-    "tags": ["LED", "inspection"],
+    "tags": [
+      "LED",
+      "inspection"
+    ],
     "sortOrder": 9,
     "isFeatured": true,
     "isActive": true
   },
   {
     "id": "digital-laser-level",
-    "name": {"zh": "数字激光水平仪", "en": "Digital Laser Level", "ru": "Цифровой лазерный уровень"},
-    "description": {"zh": "用于地坪施工、货架安装和设备定位的辅助测量工具。", "en": "Measurement tool for flooring work, shelf installation, and equipment positioning.", "ru": "Измерительный инструмент для полов, стеллажей и позиционирования оборудования."},
-    "detail": {"zh": "支持水平垂直双线投射，带数字角度显示，便于现场快速校准。", "en": "Projects horizontal and vertical lines with digital angle display for quick on-site alignment.", "ru": "Горизонтальная и вертикальная линии с цифровым углом для быстрой настройки."},
+    "name": {
+      "zh": "数字激光水平仪",
+      "en": "Digital Laser Level",
+      "ru": "Цифровой лазерный уровень"
+    },
+    "description": {
+      "zh": "用于地坪施工、货架安装和设备定位的辅助测量工具。",
+      "en": "Measurement tool for flooring work, shelf installation, and equipment positioning.",
+      "ru": "Измерительный инструмент для полов, стеллажей и позиционирования оборудования."
+    },
+    "detail": {
+      "zh": "支持水平垂直双线投射，带数字角度显示，便于现场快速校准。",
+      "en": "Projects horizontal and vertical lines with digital angle display for quick on-site alignment.",
+      "ru": "Горизонтальная и вертикальная линии с цифровым углом для быстрой настройки."
+    },
     "categoryId": "33333333-3333-4333-8333-333333333333",
-    "coverImage": "/mock/images/laser-meter.svg",
-    "coverImages": ["/mock/images/laser-meter.svg"],
-    "images": ["/mock/images/laser-meter.svg"],
+    "coverImage": "/mock/product-images/digital-laser-level/cover.svg",
+    "coverImages": [
+      "/mock/product-images/digital-laser-level/cover.svg"
+    ],
+    "images": [
+      "/mock/product-images/digital-laser-level/detail-1.svg",
+      "/mock/product-images/digital-laser-level/detail-2.svg"
+    ],
     "specs": [
-      {"id":"range","label":{"zh":"工作距离","en":"Working range","ru":"Рабочая дальность"},"value":{"zh":"30 m","en":"30 m","ru":"30 м"}},
-      {"id":"accuracy","label":{"zh":"精度","en":"Accuracy","ru":"Точность"},"value":{"zh":"+/- 1.5 mm","en":"+/- 1.5 mm","ru":"+/- 1.5 мм"}}
+      {
+        "id": "range",
+        "label": {
+          "zh": "工作距离",
+          "en": "Working range",
+          "ru": "Рабочая дальность"
+        },
+        "value": {
+          "zh": "30 m",
+          "en": "30 m",
+          "ru": "30 м"
+        }
+      },
+      {
+        "id": "accuracy",
+        "label": {
+          "zh": "精度",
+          "en": "Accuracy",
+          "ru": "Точность"
+        },
+        "value": {
+          "zh": "+/- 1.5 mm",
+          "en": "+/- 1.5 mm",
+          "ru": "+/- 1.5 мм"
+        }
+      }
     ],
     "variants": [
-      {"id":"red","name":{"zh":"红光款","en":"Red beam","ru":"Красный луч"},"price":29,"sortOrder":1,"isDefault":true,"isActive":true,"sku":"DLL-R"},
-      {"id":"green","name":{"zh":"绿光款","en":"Green beam","ru":"Зеленый луч"},"price":39,"sortOrder":2,"isDefault":false,"isActive":true,"sku":"DLL-G"}
+      {
+        "id": "red",
+        "name": {
+          "zh": "红光款",
+          "en": "Red beam",
+          "ru": "Красный луч"
+        },
+        "price": 29,
+        "sortOrder": 1,
+        "isDefault": true,
+        "isActive": true,
+        "sku": "DLL-R"
+      },
+      {
+        "id": "green",
+        "name": {
+          "zh": "绿光款",
+          "en": "Green beam",
+          "ru": "Зеленый луч"
+        },
+        "price": 39,
+        "sortOrder": 2,
+        "isDefault": false,
+        "isActive": true,
+        "sku": "DLL-G"
+      }
     ],
-    "tags": ["laser", "level"],
+    "tags": [
+      "laser",
+      "level"
+    ],
     "sortOrder": 10,
     "isFeatured": false,
     "isActive": true
