@@ -27,6 +27,16 @@ type TelegramLocationManager = {
 }
 
 const LOCATION_TIMEOUT_MS = 10_000
+const REVERSE_GEOCODE_TIMEOUT_MS = 5_000
+const reverseGeocodeCache = new Map<string, LocationSnapshot>()
+
+function getReverseGeocodeCacheKey(position: GeolocationPosition, language: SupportedLanguage) {
+  return [
+    language,
+    position.coords.latitude.toFixed(6),
+    position.coords.longitude.toFixed(6),
+  ].join(':')
+}
 
 function buildPositionFromTelegram(location: TelegramLocationData): GeolocationPosition {
   const coords: GeolocationCoordinates = {
@@ -182,10 +192,19 @@ export const locationService = {
    */
   async reverseGeocode(position: GeolocationPosition, language: SupportedLanguage): Promise<LocationSnapshot> {
     const fallback = getFallbackSnapshot(position)
+    const cacheKey = getReverseGeocodeCacheKey(position, language)
+    const cached = reverseGeocodeCache.get(cacheKey)
+
+    if (cached) {
+      return cached
+    }
 
     if (!isSupabaseConfigured()) {
       return fallback
     }
+
+    const abortController = new AbortController()
+    const timeoutId = window.setTimeout(() => abortController.abort(), REVERSE_GEOCODE_TIMEOUT_MS)
 
     try {
       const { anonKey, url } = getSupabaseConfig()
@@ -201,6 +220,7 @@ export const locationService = {
           'Content-Type': 'application/json',
         },
         method: 'POST',
+        signal: abortController.signal,
       })
 
       if (!response.ok) {
@@ -209,9 +229,13 @@ export const locationService = {
 
       const data = (await response.json()) as ReverseGeocodeResponse
 
-      return data.location ?? fallback
+      const location = data.location ?? fallback
+      reverseGeocodeCache.set(cacheKey, location)
+      return location
     } catch {
       return fallback
+    } finally {
+      window.clearTimeout(timeoutId)
     }
   },
 }

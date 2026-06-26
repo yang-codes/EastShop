@@ -12,9 +12,11 @@
   "dependencies": {
     "@scalar/api-reference-react": "^0.9.41",
     "@supabase/supabase-js": "^2.106.2",
+    "@types/leaflet": "^1.9.21",
     "browser-image-compression": "^2.0.2",
     "exceljs": "^4.4.0",
     "i18next": "^26.3.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

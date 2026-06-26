@@ -202,15 +202,14 @@ export function StoreHomePage() {
                   <div className="product-card-copy">
                     <Link className="product-card-copy-link" to={`/product/${product.id}`}>
                       <h2>{getLocalizedText(product.name, language)}</h2>
+                      <p className="product-card-description">{getLocalizedText(product.description, language)}</p>
                       {(product.tags[language] ?? product.tags.zh).length > 0 ? (
                         <div className="product-card-tags" aria-label={t('admin.tags')}>
                           {(product.tags[language] ?? product.tags.zh).map((tag) => (
                             <span key={tag}>{tag}</span>
                           ))}
                         </div>
-                      ) : (
-                        <p>{getLocalizedText(product.description, language)}</p>
-                      )}
+                      ) : null}
                     </Link>
                     {selectedVariant ? (
                       <div className={`product-card-variants ${isExpanded ? 'is-expanded' : ''}`} aria-label="Product specifications">

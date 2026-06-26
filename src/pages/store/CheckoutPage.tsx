@@ -1,10 +1,12 @@
-import { MapPin } from 'lucide-react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Map, MapPin } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { GeoapifyAddressPicker } from '../../components/GeoapifyAddressPicker'
+import { MapAddressPicker, type PickedAddress } from '../../components/MapAddressPicker'
 import { PageHeader } from '../../components/PageHeader'
 import { detectEntrySource } from '../../lib/source'
+import { loadAMap } from '../../services/amapLoader'
 import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
 import { locationService } from '../../services/locationService'
@@ -22,6 +24,16 @@ import type { Product } from '../../types/product'
 
 function resolveLanguage(language: string): SupportedLanguage {
   return resolveSupportedLanguage(language)
+}
+
+function normalizePhonePrefixValue(prefix: string) {
+  const normalized = prefix.trim().replace(/[^\d+]/g, '')
+
+  if (!normalized || normalized === '+') {
+    return '+'
+  }
+
+  return normalized.startsWith('+') ? normalized : `+${normalized}`
 }
 
 function getLocationErrorMessage(error: unknown, fallback: string, secureOriginMessage: string) {
@@ -44,6 +56,64 @@ function getLocationErrorMessage(error: unknown, fallback: string, secureOriginM
   }
 
   return fallback
+}
+
+function canUseBrowserGeolocation() {
+  const hostname = window.location.hostname
+  return (
+    window.isSecureContext ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '[::1]'
+  )
+}
+
+const AMAP_REGEOCODE_RADIUS = 120
+
+function compactAddressParts(parts: Array<string | undefined>) {
+  return parts
+    .map((part) => part?.trim())
+    .filter((part, index, list): part is string => Boolean(part) && list.indexOf(part) === index)
+}
+
+function getNearestAmapPoi(result: AMap.GeocodeResult) {
+  return result.regeocode.pois?.find((poi) => {
+    const distance = Number(poi.distance)
+    return poi.name && (!Number.isFinite(distance) || distance <= AMAP_REGEOCODE_RADIUS)
+  })
+}
+
+function formatAmapLocationSnapshot(result: AMap.GeocodeResult, lnglat: [number, number], accuracy?: number): LocationSnapshot {
+  const component = result.regeocode.addressComponent
+  const poi = getNearestAmapPoi(result)
+  const baseSnapshot = {
+    accuracy,
+    city: component.city || component.province,
+    district: component.district,
+    latitude: lnglat[1],
+    longitude: lnglat[0],
+    street: [component.street, component.streetNumber].filter(Boolean).join(''),
+  }
+
+  if (poi?.name) {
+    return {
+      ...baseSnapshot,
+      formattedAddress: compactAddressParts([
+        component.province,
+        component.city,
+        component.district,
+        poi.address,
+        poi.name,
+      ]).join(''),
+      street: poi.address || baseSnapshot.street,
+    }
+  }
+
+  return {
+    ...baseSnapshot,
+    formattedAddress: result.regeocode.formattedAddress,
+  }
 }
 
 const submitErrorTranslationKeys: Record<string, string> = {
@@ -72,6 +142,68 @@ function getSubmitErrorMessage(error: unknown, translate: (key: string) => strin
   return fallback
 }
 
+async function getAmapLocationSnapshot(): Promise<LocationSnapshot> {
+  if (!canUseBrowserGeolocation()) {
+    throw new Error('GEOLOCATION_REQUIRES_SECURE_ORIGIN')
+  }
+
+  await loadAMap()
+
+  if (!window.AMap) {
+    throw new Error('AMAP_NOT_AVAILABLE')
+  }
+
+  const geolocation = new window.AMap.Geolocation({
+    convert: true,
+    enableHighAccuracy: true,
+    timeout: 10000,
+    zoomToAccuracy: true,
+  })
+  const positionResult = await new Promise<AMap.GeolocationResult>((resolve, reject) => {
+    geolocation.getCurrentPosition((status, result) => {
+      if (status === 'complete' && typeof result !== 'string' && result.position) {
+        resolve(result)
+        return
+      }
+
+      reject(new Error(typeof result === 'string' ? result : result.message || 'AMAP_LOCATION_FAILED'))
+    })
+  })
+
+  if (!positionResult.position) {
+    throw new Error('AMAP_LOCATION_FAILED')
+  }
+
+  const lnglat: [number, number] = [positionResult.position.getLng(), positionResult.position.getLat()]
+
+  if (positionResult.formattedAddress) {
+    return {
+      accuracy: positionResult.accuracy,
+      formattedAddress: positionResult.formattedAddress,
+      latitude: lnglat[1],
+      longitude: lnglat[0],
+    }
+  }
+
+  const geocoder = new window.AMap.Geocoder({ extensions: 'all', radius: AMAP_REGEOCODE_RADIUS })
+
+  return new Promise((resolve) => {
+    geocoder.getAddress(lnglat, (status, result) => {
+      if (status === 'complete' && typeof result !== 'string') {
+        resolve(formatAmapLocationSnapshot(result, lnglat, positionResult.accuracy))
+        return
+      }
+
+      resolve({
+        accuracy: positionResult.accuracy,
+        formattedAddress: positionResult.formattedAddress || `${lnglat[1].toFixed(6)}, ${lnglat[0].toFixed(6)}`,
+        latitude: lnglat[1],
+        longitude: lnglat[0],
+      })
+    })
+  })
+}
+
 export function CheckoutPage() {
   const { i18n, t } = useTranslation()
   const [cart, setCart] = useState<CartLine[]>(() => cartService.getCart())
@@ -89,6 +221,7 @@ export function CheckoutPage() {
   const [note, setNote] = useState('')
   const [location, setLocation] = useState<LocationSnapshot | null>(null)
   const [locationStatus, setLocationStatus] = useState('')
+  const [showMapPicker, setShowMapPicker] = useState(false)
   const [isLocating, setIsLocating] = useState(false)
   const [catalogErrorMessage, setCatalogErrorMessage] = useState('')
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
@@ -97,6 +230,14 @@ export function CheckoutPage() {
   const [submittedOrderId, setSubmittedOrderId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const language = resolveLanguage(i18n.language)
+  const selectedPhonePrefix = useMemo(
+    () => phonePrefixes.find((item) => item.id === phonePrefixId) ?? phonePrefixes[0] ?? defaultPhonePrefixes[0],
+    [phonePrefixId, phonePrefixes],
+  )
+  const effectivePhonePrefix = selectedPhonePrefix.isCustom
+    ? normalizePhonePrefixValue(customPhonePrefix)
+    : normalizePhonePrefixValue(selectedPhonePrefix.prefix)
+  const shouldUseAmap = effectivePhonePrefix === '+86'
 
   useEffect(() => {
     let isMounted = true
@@ -192,8 +333,15 @@ export function CheckoutPage() {
     setLocationStatus(t('checkout.locating'))
 
     try {
-      const position = await locationService.getBrowserPosition()
-      const snapshot = await locationService.reverseGeocode(position, language)
+      let snapshot: LocationSnapshot
+
+      if (shouldUseAmap) {
+        snapshot = await getAmapLocationSnapshot()
+      } else {
+        const position = await locationService.getBrowserPosition()
+        snapshot = await locationService.reverseGeocode(position, language)
+      }
+
       const coordinates = `${snapshot.latitude?.toFixed(6)}, ${snapshot.longitude?.toFixed(6)}`
       const detectedAddress = snapshot.formattedAddress || coordinates
       const detectedPlace = [snapshot.city, snapshot.country].filter(Boolean).join(', ')
@@ -216,6 +364,22 @@ export function CheckoutPage() {
     }
   }
 
+  function handleMapConfirm(pickedAddress: PickedAddress) {
+    const coordinates = `${pickedAddress.latitude.toFixed(6)}, ${pickedAddress.longitude.toFixed(6)}`
+
+    setAddress(pickedAddress.address)
+    setLocation({
+      city: pickedAddress.city,
+      district: pickedAddress.district,
+      formattedAddress: pickedAddress.address,
+      latitude: pickedAddress.latitude,
+      longitude: pickedAddress.longitude,
+      street: pickedAddress.street,
+    })
+    setLocationStatus(t('checkout.locationCoordinates', { accuracy: 0, coordinates }))
+    setShowMapPicker(false)
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setValidationMessage('')
@@ -236,13 +400,7 @@ export function CheckoutPage() {
       return
     }
 
-    const selectedPhonePrefix = phonePrefixes.find((item) => item.id === phonePrefixId) ?? phonePrefixes[0] ?? defaultPhonePrefixes[0]
-    const normalizedCustomPrefix = customPhonePrefix.trim().replace(/[^\d+]/g, '')
-    const phonePrefix = selectedPhonePrefix.isCustom
-      ? normalizedCustomPrefix.startsWith('+')
-        ? normalizedCustomPrefix
-        : `+${normalizedCustomPrefix}`
-      : selectedPhonePrefix.prefix
+    const phonePrefix = effectivePhonePrefix
     const localPhone = phone.replace(/\D/g, '')
     const fullPhone = `${phonePrefix}${localPhone}`
     const normalizedSocialHandle = socialHandle.trim()
@@ -373,21 +531,17 @@ export function CheckoutPage() {
               {t('checkout.address')}
               <textarea onChange={(event) => setAddress(event.target.value)} rows={3} value={address} />
             </label>
-            <button className="secondary-button" disabled={isLocating} onClick={handleLocate} type="button">
-              <MapPin size={18} />
-              {isLocating ? t('checkout.locating') : t('checkout.locate')}
-            </button>
+            <div className="checkout-address-actions">
+              <button className="secondary-button" disabled={isLocating} onClick={handleLocate} type="button">
+                <MapPin size={18} />
+                {isLocating ? t('checkout.locating') : t('checkout.locate')}
+              </button>
+              <button className="secondary-button" onClick={() => setShowMapPicker(true)} type="button">
+                <Map size={18} />
+                {t('checkout.mapSelect')}
+              </button>
+            </div>
             {locationStatus ? <p className="location-status">{locationStatus}</p> : null}
-            {location?.latitude != null && location.longitude != null ? (
-              <a
-                className="map-link"
-                href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {t('checkout.openMap')}
-              </a>
-            ) : null}
             <label>
               {t('checkout.social')}
               <div className="social-contact-row">
@@ -454,6 +608,25 @@ export function CheckoutPage() {
           </aside>
         </div>
       )}
+
+      {showMapPicker ? (
+        shouldUseAmap ? (
+          <MapAddressPicker
+            initialAddress={address}
+            initialLocation={location}
+            onClose={() => setShowMapPicker(false)}
+            onConfirm={handleMapConfirm}
+          />
+        ) : (
+          <GeoapifyAddressPicker
+            initialAddress={address}
+            initialLocation={location}
+            language={language}
+            onClose={() => setShowMapPicker(false)}
+            onConfirm={handleMapConfirm}
+          />
+        )
+      ) : null}
     </section>
   )
 }

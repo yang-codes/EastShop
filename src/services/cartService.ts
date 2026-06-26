@@ -56,6 +56,7 @@ export const cartService = {
 
   clearCart() {
     removeStoredCart()
+    window.dispatchEvent(new Event('cart-updated'))
   },
 
   getCart(): CartLine[] {
