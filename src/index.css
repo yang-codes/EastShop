@@ -1802,7 +1802,7 @@ p {
   opacity: 0.65;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (pointer: coarse) and (hover: none) {
   .app-shell {
     padding-inline: 12px;
   }
@@ -2089,6 +2089,10 @@ p {
     overflow: auto;
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-catalog-layout .product-grid.has-expanded-variant-menu {
+    padding-bottom: calc(220px + env(safe-area-inset-bottom));
   }
 
   .mobile-catalog-layout .product-card {
@@ -2618,7 +2622,7 @@ p {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 520px) and (pointer: coarse) and (hover: none) {
   .topbar {
     gap: 12px;
     padding: 14px 0 10px;
@@ -3648,7 +3652,7 @@ p {
   min-width: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (pointer: coarse) and (hover: none) {
   .store-orders-link {
     padding-inline: 10px;
   }

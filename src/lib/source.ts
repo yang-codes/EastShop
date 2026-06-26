@@ -62,7 +62,7 @@ function isInstagramRuntime() {
 function isTelegramRuntime() {
   const webApp = window.Telegram?.WebApp
 
-  return Boolean(webApp?.initData?.trim() || webApp?.initDataUnsafe?.user || webApp)
+  return Boolean(webApp?.initData?.trim() || webApp?.initDataUnsafe?.user)
 }
 
 export function detectEntrySource(): EntrySource {
@@ -73,6 +73,11 @@ export function detectEntrySource(): EntrySource {
     return urlSource
   }
 
+  if (isKnownWebHost()) {
+    rememberEntrySource('web')
+    return 'web'
+  }
+
   if (isTelegramRuntime()) {
     rememberEntrySource('telegram')
     return 'telegram'
@@ -81,11 +86,6 @@ export function detectEntrySource(): EntrySource {
   if (isInstagramRuntime()) {
     rememberEntrySource('instagram')
     return 'instagram'
-  }
-
-  if (isKnownWebHost()) {
-    rememberEntrySource('web')
-    return 'web'
   }
 
   const rememberedSource = getRememberedEntrySource()

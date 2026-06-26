@@ -1,5 +1,5 @@
 import { ChevronDown, Plus, Search } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type UIEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type UIEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
@@ -39,6 +39,7 @@ export function StoreHomePage() {
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({})
   const [expandedVariantIds, setExpandedVariantIds] = useState<Record<string, boolean>>({})
   const [isHeroCollapsed, setIsHeroCollapsed] = useState(false)
+  const ignoreVariantCollapseUntilRef = useRef(0)
   const lastCatalogScrollTopRef = useRef(0)
 
   useEffect(() => {
@@ -90,7 +91,9 @@ export function StoreHomePage() {
       setIsHeroCollapsed(true)
     }
 
-    setExpandedVariantIds({})
+    if (Date.now() >= ignoreVariantCollapseUntilRef.current) {
+      setExpandedVariantIds({})
+    }
 
     lastCatalogScrollTopRef.current = Math.max(0, scrollTop)
   }
@@ -121,6 +124,30 @@ export function StoreHomePage() {
     setExpandedVariantIds((current) => ({ ...current, [productId]: false }))
   }
 
+  function handleVariantToggle(productId: string, event: MouseEvent<HTMLButtonElement>) {
+    const productCard = event.currentTarget.closest('.product-card')
+
+    function scrollExpandedMenuIntoView() {
+      const variantMenu = productCard?.querySelector('.product-card-variant-menu')
+      ;(variantMenu ?? productCard)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+
+    setExpandedVariantIds((current) => {
+      const isOpening = !current[productId]
+
+      if (isOpening) {
+        ignoreVariantCollapseUntilRef.current = Date.now() + 1600
+        window.requestAnimationFrame(() => {
+          productCard?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+          window.requestAnimationFrame(scrollExpandedMenuIntoView)
+        })
+        window.setTimeout(scrollExpandedMenuIntoView, 260)
+      }
+
+      return isOpening ? { [productId]: true } : { ...current, [productId]: false }
+    })
+  }
+
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
@@ -144,6 +171,8 @@ export function StoreHomePage() {
       return matchesCategory && matchesFeatured && (!normalizedQuery || searchableText.includes(normalizedQuery))
     })
   }, [categoryId, featuredOnly, products, query])
+
+  const hasExpandedVariantMenu = Object.values(expandedVariantIds).some(Boolean)
 
   return (
     <section className={`page-stack store-home-page ${isHeroCollapsed ? 'is-hero-collapsed' : ''}`} data-language={language}>
@@ -187,7 +216,7 @@ export function StoreHomePage() {
             </button>
           ))}
         </nav>
-        <div className="product-grid" onScroll={handleCatalogScroll}>
+        <div className={`product-grid ${hasExpandedVariantMenu ? 'has-expanded-variant-menu' : ''}`} onScroll={handleCatalogScroll}>
           {filteredProducts.map((product) => {
             const variants = getDisplayVariants(product)
             const selectedVariant = getSelectedVariant(product)
@@ -215,9 +244,9 @@ export function StoreHomePage() {
                       <div className={`product-card-variants ${isExpanded ? 'is-expanded' : ''}`} aria-label="Product specifications">
                         <button
                           className="active"
-                          onClick={() => {
+                          onClick={(event) => {
                             if (variants.length > 1) {
-                              setExpandedVariantIds((current) => ({ ...current, [product.id]: !current[product.id] }))
+                              handleVariantToggle(product.id, event)
                             }
                           }}
                           type="button"
