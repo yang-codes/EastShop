@@ -4,8 +4,14 @@ const entrySourceStorageKey = 'eastshop.entrySource'
 const webHostnames = new Set(['localhost', '127.0.0.1', 'www.yangshop.online', 'yangshop.online'])
 
 function normalizeEntrySource(source: string | null): EntrySource | null {
-  if (source === 'instagram' || source === 'web' || source === 'telegram') {
-    return source
+  const normalizedSource = source?.trim().toLowerCase()
+
+  if (normalizedSource === 'tel' || normalizedSource === 'tg') {
+    return 'telegram'
+  }
+
+  if (normalizedSource === 'instagram' || normalizedSource === 'web' || normalizedSource === 'telegram') {
+    return normalizedSource
   }
 
   return null
@@ -52,6 +58,12 @@ function isInstagramRuntime() {
     || /(^https?:\/\/)?([^/]+\.)?instagram\.com/i.test(referrer)
 }
 
+function isTelegramRuntime() {
+  const webApp = window.Telegram?.WebApp
+
+  return Boolean(webApp?.initData?.trim() || webApp?.initDataUnsafe?.user || webApp)
+}
+
 export function detectEntrySource(): EntrySource {
   const urlSource = getUrlEntrySource()
 
@@ -60,12 +72,7 @@ export function detectEntrySource(): EntrySource {
     return urlSource
   }
 
-  if (isKnownWebHost()) {
-    rememberEntrySource('web')
-    return 'web'
-  }
-
-  if (window.Telegram?.WebApp) {
+  if (isTelegramRuntime()) {
     rememberEntrySource('telegram')
     return 'telegram'
   }
@@ -73,6 +80,11 @@ export function detectEntrySource(): EntrySource {
   if (isInstagramRuntime()) {
     rememberEntrySource('instagram')
     return 'instagram'
+  }
+
+  if (isKnownWebHost()) {
+    rememberEntrySource('web')
+    return 'web'
   }
 
   const rememberedSource = getRememberedEntrySource()
