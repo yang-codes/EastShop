@@ -2014,7 +2014,7 @@ p {
     align-items: start;
     display: grid;
     gap: 8px;
-    grid-template-columns: 76px minmax(0, 1fr);
+    grid-template-columns: clamp(84px, 22vw, 96px) minmax(0, 1fr);
     height: 100%;
     min-height: 0;
     min-width: 0;
@@ -2039,19 +2039,46 @@ p {
     border: 0;
     border-radius: 7px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    line-height: 1.3;
+    hyphens: none;
+    line-height: 1.25;
     min-height: 42px;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     padding: 6px 4px;
     text-align: center;
+    word-break: keep-all;
   }
 
   .mobile-category-rail button.active {
     background: #ffffff;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     color: var(--text);
+  }
+
+  .store-home-page[data-language="ru"] .mobile-catalog-layout {
+    grid-template-columns: clamp(100px, 28vw, 116px) minmax(0, 1fr);
+  }
+
+  .store-home-page[data-language="ru"] .mobile-category-rail {
+    overflow-x: hidden;
+  }
+
+  .store-home-page[data-language="ru"] .mobile-category-rail button {
+    font-size: 10px;
+    hyphens: auto;
+    overflow-wrap: anywhere;
+    padding-inline: 5px;
+    white-space: normal;
+    word-break: normal;
+  }
+
+  .store-home-page[data-language="ru"] .mobile-catalog-layout .product-card h2,
+  .store-home-page[data-language="ru"] .mobile-catalog-layout .product-card-tags span,
+  .store-home-page[data-language="ru"] .mobile-catalog-layout .product-card-variants button span {
+    hyphens: auto;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
   .mobile-catalog-layout .product-grid {

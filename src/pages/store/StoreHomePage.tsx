@@ -146,7 +146,7 @@ export function StoreHomePage() {
   }, [categoryId, featuredOnly, products, query])
 
   return (
-    <section className={`page-stack store-home-page ${isHeroCollapsed ? 'is-hero-collapsed' : ''}`}>
+    <section className={`page-stack store-home-page ${isHeroCollapsed ? 'is-hero-collapsed' : ''}`} data-language={language}>
       <PageHeader
         description={storeSettings?.storeDescription[language] || t('store.heroText')}
         title={storeSettings?.storeTitle[language] || t('store.heroTitle')}
