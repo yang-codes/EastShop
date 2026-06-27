@@ -85,7 +85,7 @@
 
 参数：
 - `position: GeolocationPosition`
-- `language: 'zh' | 'en' | 'ru'`
+- `language: 'zh' | 'en' | 'ru' | 'uz'`
 
 返回：`Promise<LocationSnapshot>`
 

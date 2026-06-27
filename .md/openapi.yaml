@@ -651,6 +651,7 @@ components:
             - zh
             - en
             - ru
+            - uz
         price:
           type: number
           description: 下单时商品单价快照。
@@ -836,6 +837,7 @@ components:
             - zh
             - en
             - ru
+            - uz
           example: zh
     ReverseGeocodeResponse:
       type: object
@@ -875,6 +877,7 @@ components:
             - zh
             - en
             - ru
+            - uz
         telegramInitData:
           type: string
           description: Telegram Mini App initData；Telegram 来源必须提交，服务端必须验证。
