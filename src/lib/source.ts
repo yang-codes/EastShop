@@ -73,11 +73,6 @@ export function detectEntrySource(): EntrySource {
     return urlSource
   }
 
-  if (isKnownWebHost()) {
-    rememberEntrySource('web')
-    return 'web'
-  }
-
   if (isTelegramRuntime()) {
     rememberEntrySource('telegram')
     return 'telegram'
@@ -92,6 +87,11 @@ export function detectEntrySource(): EntrySource {
 
   if (rememberedSource) {
     return rememberedSource
+  }
+
+  if (isKnownWebHost()) {
+    rememberEntrySource('web')
+    return 'web'
   }
 
   return 'web'

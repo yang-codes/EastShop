@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { GeoapifyAddressPicker } from '../../components/GeoapifyAddressPicker'
 import { MapAddressPicker, type PickedAddress } from '../../components/MapAddressPicker'
 import { PageHeader } from '../../components/PageHeader'
-import { detectEntrySource } from '../../lib/source'
+import { detectEntrySource, waitForTelegramInitData } from '../../lib/source'
 import { loadAMap } from '../../services/amapLoader'
 import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
@@ -417,6 +417,8 @@ export function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
+      const source = detectEntrySource()
+      const telegramInitData = source === 'telegram' ? await waitForTelegramInitData() : undefined
       const result = await orderService.submitOrder({
         cart: cartItems.map(({ line }) => line),
         companyWebsite,
@@ -430,8 +432,8 @@ export function CheckoutPage() {
         },
         language,
         location: location ?? undefined,
-        source: detectEntrySource(),
-        telegramInitData: window.Telegram?.WebApp?.initData,
+        source,
+        telegramInitData,
       })
 
       cartService.clearCart()
