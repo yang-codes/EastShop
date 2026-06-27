@@ -4,8 +4,12 @@ const entrySourceStorageKey = 'eastshop.entrySource'
 const webHostnames = new Set(['localhost', '127.0.0.1', 'www.yangshop.online', 'yangshop.online'])
 const telegramInitDataPollIntervalMs = 100
 
-function normalizeEntrySource(source: string | null): EntrySource | null {
+function normalizeEntrySource(source: string | null | undefined): EntrySource | null {
   const normalizedSource = source?.trim().toLowerCase()
+
+  if (!normalizedSource) {
+    return null
+  }
 
   if (normalizedSource === 'tel' || normalizedSource === 'tg') {
     return 'telegram'
@@ -18,15 +22,60 @@ function normalizeEntrySource(source: string | null): EntrySource | null {
   return null
 }
 
+function normalizeEntrySourceFromParam(value: string | null | undefined): EntrySource | null {
+  const directSource = normalizeEntrySource(value)
+
+  if (directSource) {
+    return directSource
+  }
+
+  const normalizedValue = value?.trim()
+  if (!normalizedValue) {
+    return null
+  }
+
+  const nestedParams = new URLSearchParams(normalizedValue.includes('?') ? normalizedValue.split('?').pop() : normalizedValue)
+  return normalizeEntrySource(nestedParams.get('source') ?? nestedParams.get('utm_source') ?? nestedParams.get('ref'))
+}
+
 function getHashQuery() {
   return window.location.hash.includes('?') ? window.location.hash.split('?')[1] : ''
 }
 
+function getHashParams() {
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+  return new URLSearchParams(hash.includes('?') ? hash.split('?').pop() : hash)
+}
+
 function getUrlEntrySource(): EntrySource | null {
   const params = new URLSearchParams(window.location.search)
-  const hashParams = new URLSearchParams(getHashQuery())
+  const hashQueryParams = new URLSearchParams(getHashQuery())
+  const hashParams = getHashParams()
+  const telegramStartParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param
 
-  return normalizeEntrySource(params.get('source') ?? hashParams.get('source'))
+  const candidates = [
+    params.get('source'),
+    params.get('utm_source'),
+    params.get('ref'),
+    params.get('startapp'),
+    params.get('tgWebAppStartParam'),
+    hashQueryParams.get('source'),
+    hashQueryParams.get('utm_source'),
+    hashQueryParams.get('ref'),
+    hashQueryParams.get('startapp'),
+    hashParams.get('tgWebAppStartParam'),
+    telegramStartParam,
+  ]
+
+  for (const candidate of candidates) {
+    const source = normalizeEntrySourceFromParam(candidate)
+
+    if (source) {
+      return source
+    }
+  }
+
+  return null
 }
 
 function rememberEntrySource(source: EntrySource) {
@@ -62,7 +111,7 @@ function isInstagramRuntime() {
 function isTelegramRuntime() {
   const webApp = window.Telegram?.WebApp
 
-  return Boolean(webApp?.initData?.trim() || webApp?.initDataUnsafe?.user)
+  return Boolean(webApp?.initData?.trim() || webApp?.initDataUnsafe?.user || getTelegramInitData())
 }
 
 export function detectEntrySource(): EntrySource {
@@ -105,8 +154,7 @@ export function getTelegramInitData() {
   }
 
   const params = new URLSearchParams(window.location.search)
-  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
-  const hashParams = new URLSearchParams(hash.includes('?') ? hash.split('?').pop() : hash)
+  const hashParams = getHashParams()
 
   return params.get('tgWebAppData')?.trim() ?? hashParams.get('tgWebAppData')?.trim() ?? ''
 }
