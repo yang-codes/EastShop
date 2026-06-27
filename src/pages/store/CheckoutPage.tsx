@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { GeoapifyAddressPicker } from '../../components/GeoapifyAddressPicker'
 import { MapAddressPicker, type PickedAddress } from '../../components/MapAddressPicker'
 import { PageHeader } from '../../components/PageHeader'
-import { detectEntrySource, waitForTelegramInitData } from '../../lib/source'
+import { detectEntrySource, getTelegramInitData, preloadTelegramInitData, waitForTelegramInitData } from '../../lib/source'
 import { loadAMap } from '../../services/amapLoader'
 import { cartService, type CartLine } from '../../services/cartService'
 import { catalogService } from '../../services/catalogService'
@@ -229,6 +229,8 @@ export function CheckoutPage() {
   const [submitMessage, setSubmitMessage] = useState('')
   const [submittedOrderId, setSubmittedOrderId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [entrySource, setEntrySource] = useState(() => detectEntrySource())
+  const [telegramInitData, setTelegramInitData] = useState(() => getTelegramInitData())
   const language = resolveLanguage(i18n.language)
   const selectedPhonePrefix = useMemo(
     () => phonePrefixes.find((item) => item.id === phonePrefixId) ?? phonePrefixes[0] ?? defaultPhonePrefixes[0],
@@ -238,6 +240,35 @@ export function CheckoutPage() {
     ? normalizePhonePrefixValue(customPhonePrefix)
     : normalizePhonePrefixValue(selectedPhonePrefix.prefix)
   const shouldUseAmap = effectivePhonePrefix === '+86'
+
+  useEffect(() => {
+    let isMounted = true
+    const source = detectEntrySource()
+
+    setEntrySource(source)
+
+    if (source !== 'telegram') {
+      return () => {
+        isMounted = false
+      }
+    }
+
+    const initialInitData = getTelegramInitData()
+
+    if (initialInitData) {
+      setTelegramInitData(initialInitData)
+    }
+
+    void preloadTelegramInitData().then((initData) => {
+      if (isMounted) {
+        setTelegramInitData(initData)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -417,8 +448,16 @@ export function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      const source = detectEntrySource()
-      const telegramInitData = source === 'telegram' ? await waitForTelegramInitData() : undefined
+      const source = entrySource
+      const preparedTelegramInitData = source === 'telegram'
+        ? telegramInitData || getTelegramInitData() || await waitForTelegramInitData(300)
+        : undefined
+
+      if (source === 'telegram' && !preparedTelegramInitData) {
+        setSubmitMessage(t('checkout.submitErrors.invalidTelegram'))
+        return
+      }
+
       const result = await orderService.submitOrder({
         cart: cartItems.map(({ line }) => line),
         companyWebsite,
@@ -433,7 +472,7 @@ export function CheckoutPage() {
         language,
         location: location ?? undefined,
         source,
-        telegramInitData,
+        telegramInitData: preparedTelegramInitData,
       })
 
       cartService.clearCart()

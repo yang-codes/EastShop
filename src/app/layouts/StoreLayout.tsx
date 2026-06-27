@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 import { LanguageSwitcher } from '../../components/LanguageSwitcher'
-import { detectEntrySource } from '../../lib/source'
+import { detectEntrySource, preloadTelegramInitData } from '../../lib/source'
 import { cartService } from '../../services/cartService'
 import { storeSettingsService, type StoreSettings } from '../../services/storeSettingsService'
 import { resolveSupportedLanguage } from '../../types/language'
@@ -34,6 +34,12 @@ export function StoreLayout() {
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (source === 'telegram') {
+      void preloadTelegramInitData()
+    }
+  }, [source])
 
   useEffect(() => {
     function syncCart() {
@@ -78,4 +84,3 @@ export function StoreLayout() {
     </div>
   )
 }
-

@@ -3,6 +3,8 @@ import type { EntrySource } from '../types/order'
 const entrySourceStorageKey = 'eastshop.entrySource'
 const webHostnames = new Set(['localhost', '127.0.0.1', 'www.yangshop.online', 'yangshop.online'])
 const telegramInitDataPollIntervalMs = 100
+let cachedTelegramInitData = ''
+let telegramInitDataPreloadPromise: Promise<string> | null = null
 
 function normalizeEntrySource(source: string | null | undefined): EntrySource | null {
   const normalizedSource = source?.trim().toLowerCase()
@@ -147,19 +149,30 @@ export function detectEntrySource(): EntrySource {
 }
 
 export function getTelegramInitData() {
+  if (cachedTelegramInitData) {
+    return cachedTelegramInitData
+  }
+
   const sdkInitData = window.Telegram?.WebApp?.initData?.trim()
 
   if (sdkInitData) {
+    cachedTelegramInitData = sdkInitData
     return sdkInitData
   }
 
   const params = new URLSearchParams(window.location.search)
   const hashParams = getHashParams()
 
-  return params.get('tgWebAppData')?.trim() ?? hashParams.get('tgWebAppData')?.trim() ?? ''
+  const initData = params.get('tgWebAppData')?.trim() ?? hashParams.get('tgWebAppData')?.trim() ?? ''
+
+  if (initData) {
+    cachedTelegramInitData = initData
+  }
+
+  return initData
 }
 
-export function waitForTelegramInitData(timeoutMs = 2_000): Promise<string> {
+function pollTelegramInitData(timeoutMs: number): Promise<string> {
   const initialInitData = getTelegramInitData()
 
   if (initialInitData) {
@@ -173,8 +186,37 @@ export function waitForTelegramInitData(timeoutMs = 2_000): Promise<string> {
 
       if (initData || Date.now() - startedAt >= timeoutMs) {
         window.clearInterval(intervalId)
+        if (initData) {
+          cachedTelegramInitData = initData
+        }
         resolve(initData)
       }
     }, telegramInitDataPollIntervalMs)
   })
+}
+
+export function preloadTelegramInitData(timeoutMs = 5_000): Promise<string> {
+  const initData = getTelegramInitData()
+
+  if (initData) {
+    return Promise.resolve(initData)
+  }
+
+  if (!telegramInitDataPreloadPromise) {
+    telegramInitDataPreloadPromise = pollTelegramInitData(timeoutMs).finally(() => {
+      telegramInitDataPreloadPromise = null
+    })
+  }
+
+  return telegramInitDataPreloadPromise
+}
+
+export function waitForTelegramInitData(timeoutMs = 2_000): Promise<string> {
+  const initData = getTelegramInitData()
+
+  if (initData) {
+    return Promise.resolve(initData)
+  }
+
+  return pollTelegramInitData(timeoutMs)
 }
