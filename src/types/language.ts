@@ -29,9 +29,13 @@ export function resolveSupportedLanguage(language: string): SupportedLanguage {
     return 'ru'
   }
 
+  if (normalized.startsWith('en')) {
+    return 'en'
+  }
+
   if (normalized.startsWith('uz')) {
     return 'uz'
   }
 
-  return 'uz'
+  return 'en'
 }

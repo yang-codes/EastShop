@@ -180,10 +180,12 @@ export function MyOrdersPage() {
 
   return (
     <>
-      <PageHeader
-        description={t('myOrders.description')}
-        title={t('myOrders.title')}
-      />
+      {!telegramInitData ? (
+        <PageHeader
+          description={t('myOrders.description')}
+          title={t('myOrders.title')}
+        />
+      ) : null}
 
       {telegramInitData ? (
         <section className="form-card order-lookup-card telegram-order-lookup-card">

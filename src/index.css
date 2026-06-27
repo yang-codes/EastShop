@@ -2368,9 +2368,19 @@ p {
     padding: 0 12px;
   }
 
-.product-purchase-card .spec-list div {
-    grid-template-columns: minmax(0, 1fr) auto;
+  .product-purchase-card .spec-list div {
+    align-items: start;
+    grid-template-columns: max-content minmax(0, 1fr);
     padding: 10px 0;
+  }
+
+  .product-purchase-card .spec-list dt {
+    white-space: nowrap;
+  }
+
+  .product-purchase-card .spec-list dd {
+    text-align: right;
+    white-space: normal;
   }
 
   .product-purchase-card .primary-button {
@@ -2613,13 +2623,14 @@ p {
   color: var(--muted);
   font-weight: 700;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .spec-list dd {
   margin: 0;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 @media (max-width: 520px) and (pointer: coarse) and (hover: none) {
@@ -2666,7 +2677,17 @@ p {
   }
 
   .product-purchase-card .spec-list div {
-    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .product-purchase-card .spec-list dt {
+    white-space: nowrap;
+  }
+
+  .product-purchase-card .spec-list dd {
+    text-align: right;
+    white-space: normal;
   }
 
   .variant-selector > div {
