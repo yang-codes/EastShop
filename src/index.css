@@ -2951,6 +2951,10 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .location-status {
+    display: none;
+  }
+
   .cart-panel > .cart-summary {
     align-items: center;
     background: rgba(255, 255, 255, 0.96);
