@@ -476,6 +476,7 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
           <strong>选择收货地址</strong>
         </div>
 
+        <div className="map-picker-search-panel">
         <div className="map-picker-search-box">
           <Search size={16} className="map-picker-search-icon" />
           <input
@@ -504,6 +505,7 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
             ))}
           </ul>
         ) : null}
+        </div>
 
         <div className="map-picker-map-area">
           <div ref={mapContainerRef} className="map-picker-map" />

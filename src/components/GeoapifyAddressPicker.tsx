@@ -491,6 +491,7 @@ export function GeoapifyAddressPicker({
           <strong>选择收货地址</strong>
         </div>
 
+        <div className="map-picker-search-panel">
         <div className="map-picker-search-box">
           <Search size={16} className="map-picker-search-icon" />
           <input
@@ -526,6 +527,7 @@ export function GeoapifyAddressPicker({
           </ul>
         ) : null}
         {searchNotice && searchQuery.trim() ? <div className="map-picker-search-notice">{searchNotice}</div> : null}
+        </div>
 
         <div className="map-picker-map-area">
           <div ref={mapContainerRef} className="map-picker-map" />
