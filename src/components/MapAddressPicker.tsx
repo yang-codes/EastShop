@@ -172,9 +172,11 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addressLookupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addressLookupSeqRef = useRef(0)
+  const selectedSearchQueryRef = useRef('')
   const addressCacheRef = useRef(new Map<string, AddressCacheEntry>())
   const centerRef = useRef<[number, number] | null>(null)
   const addressMetaRef = useRef<Omit<PickedAddress, 'address' | 'latitude' | 'longitude'>>({})
+  const searchCityRef = useRef('')
 
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -219,6 +221,7 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
 
     if (cached) {
       addressMetaRef.current = cached.meta
+      searchCityRef.current = cached.meta.city || cached.meta.district || searchCityRef.current
       setAddress(cached.address)
       setIsGeocoding(false)
       return
@@ -237,6 +240,7 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
         const nextOptions = getNearbyAddressOptions(result)
 
         addressMetaRef.current = nextMeta
+        searchCityRef.current = nextMeta.city || nextMeta.district || searchCityRef.current
         addressCacheRef.current.set(cacheKey, { address: nextAddress, meta: nextMeta })
         setNearbyAddresses(nextOptions)
         setAddress(nextAddress)
@@ -395,30 +399,73 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
 
-    if (!searchQuery.trim()) {
+    const keyword = searchQuery.trim()
+
+    if (selectedSearchQueryRef.current === keyword) {
+      selectedSearchQueryRef.current = ''
+      setSearchTips([])
+      setIsSearching(false)
+      return
+    }
+
+    if (!keyword) {
       setSearchTips([])
       return
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      if (!autocompleteRef.current) return
+      if (!window.AMap || !autocompleteRef.current) return
 
+      const preferredCity = searchCityRef.current.trim()
       setIsSearching(true)
-      autocompleteRef.current.search(searchQuery.trim(), (status, result) => {
+      const toSearchTips = (result: AMap.AutocompleteResult | string) => {
+        if (typeof result === 'string') return []
+
+        return result.tips
+          .filter((tip) => tip.location)
+          .map((tip) => ({
+            address: typeof tip.address === 'string' ? tip.address : '',
+            district: tip.district,
+            location: tip.location ?? null,
+            name: tip.name,
+          }))
+      }
+      const mergeTips = (localTips: SearchTip[], fallbackTips: SearchTip[]) => {
+        const seen = new Set<string>()
+
+        return [...localTips, ...fallbackTips]
+          .filter((tip) => {
+            const key = `${tip.name}-${tip.district}-${tip.address}`
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
+          .slice(0, 8)
+      }
+      const searchGlobal = (localTips: SearchTip[]) => {
+        autocompleteRef.current?.search(keyword, (globalStatus, globalResult) => {
+          setIsSearching(false)
+
+          const globalTips = globalStatus === 'complete' ? toSearchTips(globalResult) : []
+          setSearchTips(mergeTips(localTips, globalTips))
+        })
+      }
+
+      if (preferredCity) {
+        const localAutocomplete = new window.AMap.AutoComplete({ city: preferredCity, citylimit: true })
+
+        localAutocomplete.search(keyword, (localStatus, localResult) => {
+          const localTips = localStatus === 'complete' ? toSearchTips(localResult) : []
+          searchGlobal(localTips)
+        })
+        return
+      }
+
+      autocompleteRef.current.search(keyword, (status, result) => {
         setIsSearching(false)
 
-        if (status === 'complete' && typeof result !== 'string') {
-          setSearchTips(
-            result.tips
-              .filter((tip) => tip.location)
-              .slice(0, 8)
-              .map((tip) => ({
-                address: typeof tip.address === 'string' ? tip.address : '',
-                district: tip.district,
-                location: tip.location ?? null,
-                name: tip.name,
-              })),
-          )
+        if (status === 'complete') {
+          setSearchTips(toSearchTips(result).slice(0, 8))
           return
         }
 
@@ -428,7 +475,6 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
   }, [searchQuery])
 
   function handleSelectTip(tip: SearchTip) {
-    setSearchQuery('')
     setSearchTips([])
 
     if (!tip.location) return
@@ -440,6 +486,8 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
       street: tip.address,
     }
 
+    selectedSearchQueryRef.current = tip.name || tipAddress
+    setSearchQuery(selectedSearchQueryRef.current)
     addressCacheRef.current.set(getAddressCacheKey(tipLngLat), { address: tipAddress, meta: tipMeta })
     setNearbyAddresses([])
     setAddress(tipAddress)
@@ -448,6 +496,7 @@ export function MapAddressPicker({ initialAddress, initialLocation, onConfirm, o
 
   function handleSelectNearbyAddress(option: NearbyAddressOption) {
     addressMetaRef.current = option.meta
+    searchCityRef.current = option.meta.city || option.meta.district || searchCityRef.current
     setAddress(option.address)
   }
 

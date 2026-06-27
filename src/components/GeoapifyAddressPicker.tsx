@@ -165,6 +165,7 @@ export function GeoapifyAddressPicker({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addressLookupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addressLookupSeqRef = useRef(0)
+  const selectedSearchQueryRef = useRef('')
   const addressCacheRef = useRef(new Map<string, AddressCacheEntry>())
   const centerRef = useRef<[number, number] | null>(null)
   const addressMetaRef = useRef<AddressMeta>({})
@@ -430,7 +431,17 @@ export function GeoapifyAddressPicker({
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
 
-    if (!searchQuery.trim()) {
+    const keyword = searchQuery.trim()
+
+    if (selectedSearchQueryRef.current === keyword) {
+      selectedSearchQueryRef.current = ''
+      setSearchTips([])
+      setSearchNotice('')
+      setIsSearching(false)
+      return
+    }
+
+    if (!keyword) {
       setSearchTips([])
       setSearchNotice('')
       return
@@ -439,13 +450,13 @@ export function GeoapifyAddressPicker({
     debounceTimerRef.current = setTimeout(() => {
       setIsSearching(true)
 
-      fetchGeoapify('geocode/autocomplete', getSearchParams(searchQuery.trim(), '8'))
+      fetchGeoapify('geocode/autocomplete', getSearchParams(keyword, '8'))
         .then(async (data) => {
           const autocompleteTips = mapFeaturesToSearchTips(data.features)
           const nextTips =
             autocompleteTips.length > 0
               ? autocompleteTips
-              : mapFeaturesToSearchTips((await fetchGeoapify('geocode/search', getSearchParams(searchQuery.trim(), '8'))).features)
+              : mapFeaturesToSearchTips((await fetchGeoapify('geocode/search', getSearchParams(keyword, '8'))).features)
 
           setSearchTips(nextTips)
           setSearchNotice(nextTips.length > 0 ? '' : SEARCH_EMPTY_MESSAGE)
@@ -460,6 +471,9 @@ export function GeoapifyAddressPicker({
 
   function handleSelectTip(tip: SearchTip) {
     setSearchTips([])
+    setSearchNotice('')
+    selectedSearchQueryRef.current = tip.name || tip.address
+    setSearchQuery(selectedSearchQueryRef.current)
 
     addressCacheRef.current.set(getAddressCacheKey(tip.location), { address: tip.address, meta: tip.meta })
     setAddress(tip.address)
