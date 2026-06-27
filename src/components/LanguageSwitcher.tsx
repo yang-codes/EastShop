@@ -36,20 +36,12 @@ export function LanguageSwitcher({ icon }: LanguageSwitcherProps) {
       }
     }
 
-    const closePopover = () => {
-      setIsOpen(false)
-    }
-
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('scroll', closePopover, true)
-    window.addEventListener('touchmove', closePopover, { passive: true })
 
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('scroll', closePopover, true)
-      window.removeEventListener('touchmove', closePopover)
     }
   }, [isOpen])
 
